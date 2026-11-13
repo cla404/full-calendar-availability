@@ -23,7 +23,7 @@ interface AvailabilitySchedule {
     days: AvailabilityDays;
     /**
      * Date keys the host has explicitly saved/overridden.
-     * Missing key → badge shows "Default" (fallback hours from `days`).
+     * Missing key → blank cell (fallback hours still in `days` for the editor).
      * Present with times → "Open"; present empty → "Off".
      * When omitted, every key in `days` is treated as explicit (legacy).
      */

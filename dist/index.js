@@ -297,9 +297,7 @@ function isExplicitDay(schedule, dateKey) {
   return Object.prototype.hasOwnProperty.call(schedule.days, dateKey);
 }
 function badgeLabel(shortLabel, state) {
-  if (state === "open") return `${shortLabel} Open`;
-  if (state === "off") return `${shortLabel} Off`;
-  return `${shortLabel} Default`;
+  return state === "open" ? `${shortLabel} Open` : `${shortLabel} Off`;
 }
 function AvailabilityMonthCalendar(props) {
   const {
@@ -397,9 +395,9 @@ function AvailabilityMonthCalendar(props) {
       const isSelected = selectedKey === dateKey;
       const badges = schedules.map((schedule) => {
         const hasExplicit = isExplicitDay(schedule, dateKey);
-        const times = getDayTimes(schedule.days, dateKey);
-        const open = times.length > 0;
-        const state = hasExplicit ? open ? "open" : "off" : "default";
+        const explicitTimes = hasExplicit ? getDayTimes(schedule.explicitDays ?? schedule.days, dateKey) : [];
+        const open = hasExplicit && explicitTimes.length > 0;
+        const state = hasExplicit ? open ? "open" : "off" : null;
         return {
           id: schedule.id,
           shortLabel: schedule.shortLabel,
@@ -407,10 +405,11 @@ function AvailabilityMonthCalendar(props) {
           hasExplicit,
           open,
           state,
-          summary: badgeLabel(schedule.shortLabel, state)
+          summary: state ? badgeLabel(schedule.shortLabel, state) : `${schedule.shortLabel}: not set (default hours)`
         };
       });
-      const anyOpen = badges.some((badge) => badge.open);
+      const visibleBadges = badges.filter((badge) => badge.state !== null);
+      const anyExplicitOpen = badges.some((badge) => badge.hasExplicit && badge.open);
       const anyExplicitClosed = badges.some(
         (badge) => badge.hasExplicit && !badge.open
       );
@@ -420,16 +419,15 @@ function AvailabilityMonthCalendar(props) {
           type: "button",
           role: "gridcell",
           disabled: disabled || !inMonth,
-          "aria-label": `${dateKey}, ${badges.map((b) => `${b.shortLabel}: ${b.summary}`).join("; ")}`,
+          "aria-label": `${dateKey}, ${badges.map((b) => b.summary).join("; ")}`,
           "aria-pressed": isSelected,
           className: [
             "fca-day",
             inMonth ? "" : "is-outside",
             isToday ? "is-today" : "",
             isSelected ? "is-selected" : "",
-            anyOpen ? "is-open" : "",
-            anyExplicitClosed && !anyOpen ? "is-closed" : "",
-            !anyOpen && !anyExplicitClosed && badges.every((b) => b.state === "default") ? "is-default" : ""
+            anyExplicitOpen ? "is-open" : "",
+            anyExplicitClosed && !anyExplicitOpen ? "is-closed" : ""
           ].filter(Boolean).join(" "),
           onClick: () => {
             if (!inMonth || disabled) return;
@@ -437,18 +435,18 @@ function AvailabilityMonthCalendar(props) {
           },
           children: [
             /* @__PURE__ */ jsx2("span", { className: "fca-day__number", children: day.getDate() }),
-            /* @__PURE__ */ jsx2("span", { className: "fca-day__badges", children: badges.map((badge) => /* @__PURE__ */ jsx2(
+            visibleBadges.length > 0 ? /* @__PURE__ */ jsx2("span", { className: "fca-day__badges", children: visibleBadges.map((badge) => /* @__PURE__ */ jsx2(
               "span",
               {
                 className: [
                   "fca-day__badge",
-                  badge.state === "default" ? "fca-day__badge--default" : `fca-day__badge--${badge.tone}`,
+                  `fca-day__badge--${badge.tone}`,
                   badge.state === "off" ? "fca-day__badge--off" : ""
                 ].filter(Boolean).join(" "),
                 children: badge.summary
               },
               badge.id
-            )) })
+            )) }) : null
           ]
         },
         dateKey

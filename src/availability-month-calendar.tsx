@@ -41,12 +41,10 @@ function isExplicitDay(schedule: AvailabilitySchedule, dateKey: string): boolean
   return Object.prototype.hasOwnProperty.call(schedule.days, dateKey)
 }
 
-type DayBadgeState = "open" | "off" | "default"
+type DayBadgeState = "open" | "off"
 
 function badgeLabel(shortLabel: string, state: DayBadgeState): string {
-  if (state === "open") return `${shortLabel} Open`
-  if (state === "off") return `${shortLabel} Off`
-  return `${shortLabel} Default`
+  return state === "open" ? `${shortLabel} Open` : `${shortLabel} Off`
 }
 
 export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps) {
@@ -160,13 +158,15 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
           const isSelected = selectedKey === dateKey
           const badges = schedules.map(schedule => {
             const hasExplicit = isExplicitDay(schedule, dateKey)
-            const times = getDayTimes(schedule.days, dateKey)
-            const open = times.length > 0
-            const state: DayBadgeState = hasExplicit
+            const explicitTimes = hasExplicit
+              ? getDayTimes(schedule.explicitDays ?? schedule.days, dateKey)
+              : []
+            const open = hasExplicit && explicitTimes.length > 0
+            const state: DayBadgeState | null = hasExplicit
               ? open
                 ? "open"
                 : "off"
-              : "default"
+              : null
             return {
               id: schedule.id,
               shortLabel: schedule.shortLabel,
@@ -174,10 +174,13 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
               hasExplicit,
               open,
               state,
-              summary: badgeLabel(schedule.shortLabel, state),
+              summary: state
+                ? badgeLabel(schedule.shortLabel, state)
+                : `${schedule.shortLabel}: not set (default hours)`,
             }
           })
-          const anyOpen = badges.some(badge => badge.open)
+          const visibleBadges = badges.filter(badge => badge.state !== null)
+          const anyExplicitOpen = badges.some(badge => badge.hasExplicit && badge.open)
           const anyExplicitClosed = badges.some(
             badge => badge.hasExplicit && !badge.open
           )
@@ -188,18 +191,15 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
               type="button"
               role="gridcell"
               disabled={disabled || !inMonth}
-              aria-label={`${dateKey}, ${badges.map(b => `${b.shortLabel}: ${b.summary}`).join("; ")}`}
+              aria-label={`${dateKey}, ${badges.map(b => b.summary).join("; ")}`}
               aria-pressed={isSelected}
               className={[
                 "fca-day",
                 inMonth ? "" : "is-outside",
                 isToday ? "is-today" : "",
                 isSelected ? "is-selected" : "",
-                anyOpen ? "is-open" : "",
-                anyExplicitClosed && !anyOpen ? "is-closed" : "",
-                !anyOpen && !anyExplicitClosed && badges.every(b => b.state === "default")
-                  ? "is-default"
-                  : "",
+                anyExplicitOpen ? "is-open" : "",
+                anyExplicitClosed && !anyExplicitOpen ? "is-closed" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -209,24 +209,24 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
               }}
             >
               <span className="fca-day__number">{day.getDate()}</span>
-              <span className="fca-day__badges">
-                {badges.map(badge => (
-                  <span
-                    key={badge.id}
-                    className={[
-                      "fca-day__badge",
-                      badge.state === "default"
-                        ? "fca-day__badge--default"
-                        : `fca-day__badge--${badge.tone}`,
-                      badge.state === "off" ? "fca-day__badge--off" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    {badge.summary}
-                  </span>
-                ))}
-              </span>
+              {visibleBadges.length > 0 ? (
+                <span className="fca-day__badges">
+                  {visibleBadges.map(badge => (
+                    <span
+                      key={badge.id}
+                      className={[
+                        "fca-day__badge",
+                        `fca-day__badge--${badge.tone}`,
+                        badge.state === "off" ? "fca-day__badge--off" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      {badge.summary}
+                    </span>
+                  ))}
+                </span>
+              ) : null}
             </button>
           )
         })}
