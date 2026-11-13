@@ -140,7 +140,7 @@ export function DayEditor({
                 onClearOverride()
               }}
             >
-              Clear override
+              Clear
             </button>
           ) : null}
         </div>
@@ -186,7 +186,7 @@ export function DayEditor({
       ) : (
         <p className="fca-day-editor__hint">
           {isOverride
-            ? "This day is Off for clients. Clear override to make it blank, or turn it on to set hours."
+            ? "This day is Off for clients. Clear to make it blank, or turn it on to set hours."
             : "This day is blank (not bookable). Turn it on to set open hours."}
         </p>
       )}

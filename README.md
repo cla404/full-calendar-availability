@@ -50,7 +50,7 @@ type AvailabilityDays = Record<string, string[]>
 - Keys: `YYYY-MM-DD`
 - Values: open **start** times on `:00` / `:30` only
 - Empty array = day closed
-- For multi-schedule mode, pass `days` (effective hours for the day editor) and optional `explicitDays` (saved overrides). Month cells only badge **Open** / **Off** for explicit days; unset days stay blank. Use **Clear override** to remove an Off/Open day back to blank.
+- For multi-schedule mode, pass `days` (effective hours for the day editor) and optional `explicitDays` (saved overrides). Month cells only badge **Open** / **Off** for explicit days; unset days stay blank. Use **Clear** to remove an Off/Open day back to blank.
 
 ## API
 

@@ -314,7 +314,7 @@ function DayEditor({
                   if (disabled) return;
                   onClearOverride();
                 },
-                children: "Clear override"
+                children: "Clear"
               }
             ) : null
           ] })
@@ -351,7 +351,7 @@ function DayEditor({
               time
             );
           }) })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "fca-day-editor__hint", children: isOverride ? "This day is Off for clients. Clear override to make it blank, or turn it on to set hours." : "This day is blank (not bookable). Turn it on to set open hours." })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "fca-day-editor__hint", children: isOverride ? "This day is Off for clients. Clear to make it blank, or turn it on to set hours." : "This day is blank (not bookable). Turn it on to set open hours." })
       ]
     }
   );
