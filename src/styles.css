@@ -384,3 +384,101 @@
   text-decoration: line-through;
   opacity: 0.85;
 }
+
+/* Dark mode — class strategy (.dark) and system preference */
+.dark .fca-legend-item--green,
+:root.dark .fca-legend-item--green {
+  color: #6ee7b7;
+}
+
+.dark .fca-legend-item--blue,
+:root.dark .fca-legend-item--blue {
+  color: #93c5fd;
+}
+
+.dark .fca-day__badge--green,
+:root.dark .fca-day__badge--green {
+  background: color-mix(in oklab, #34d399 28%, transparent);
+  color: #a7f3d0;
+}
+
+.dark .fca-day__badge--blue,
+:root.dark .fca-day__badge--blue {
+  background: color-mix(in oklab, #60a5fa 28%, transparent);
+  color: #bfdbfe;
+}
+
+.dark .fca-day__badge--default,
+:root.dark .fca-day__badge--default {
+  background: color-mix(in oklab, #ffffff 12%, transparent);
+  color: color-mix(in oklab, #ffffff 78%, transparent);
+  opacity: 0.95;
+}
+
+.dark .fca-day__badge--off,
+:root.dark .fca-day__badge--off {
+  color: #fecdd3;
+  opacity: 0.95;
+}
+
+.dark .fca-day__badge--muted,
+:root.dark .fca-day__badge--muted {
+  opacity: 0.65;
+  color: color-mix(in oklab, #ffffff 70%, transparent);
+}
+
+.dark .fca-day__badge--neutral,
+:root.dark .fca-day__badge--neutral {
+  background: color-mix(in oklab, #ffffff 14%, transparent);
+  color: color-mix(in oklab, #ffffff 85%, transparent);
+}
+
+.dark .fca-header__legend,
+:root.dark .fca-header__legend {
+  opacity: 0.9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .fca-legend-item--green {
+    color: #6ee7b7;
+  }
+
+  :root:not(.light) .fca-legend-item--blue {
+    color: #93c5fd;
+  }
+
+  :root:not(.light) .fca-day__badge--green {
+    background: color-mix(in oklab, #34d399 28%, transparent);
+    color: #a7f3d0;
+  }
+
+  :root:not(.light) .fca-day__badge--blue {
+    background: color-mix(in oklab, #60a5fa 28%, transparent);
+    color: #bfdbfe;
+  }
+
+  :root:not(.light) .fca-day__badge--default {
+    background: color-mix(in oklab, #ffffff 12%, transparent);
+    color: color-mix(in oklab, #ffffff 78%, transparent);
+    opacity: 0.95;
+  }
+
+  :root:not(.light) .fca-day__badge--off {
+    color: #fecdd3;
+    opacity: 0.95;
+  }
+
+  :root:not(.light) .fca-day__badge--muted {
+    opacity: 0.65;
+    color: color-mix(in oklab, #ffffff 70%, transparent);
+  }
+
+  :root:not(.light) .fca-day__badge--neutral {
+    background: color-mix(in oklab, #ffffff 14%, transparent);
+    color: color-mix(in oklab, #ffffff 85%, transparent);
+  }
+
+  :root:not(.light) .fca-header__legend {
+    opacity: 0.9;
+  }
+}
