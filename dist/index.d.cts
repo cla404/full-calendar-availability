@@ -83,6 +83,10 @@ declare const ALL_DAY_TIMES: readonly string[];
 declare function defaultBusinessHourTimes(): string[];
 declare function normalizeAvailabilityTimes(times: Iterable<string>): string[];
 declare function toDateKey(date: Date): string;
+/** `YYYY-MM-DD` for `date` in an IANA zone (falls back to local `toDateKey`). */
+declare function toDateKeyInTimeZone(date: Date, timeZone?: string | null): string;
+/** True when `dateKey` is strictly before today's calendar date in `timeZone`. */
+declare function isDateKeyPast(dateKey: string, now?: Date, timeZone?: string | null): boolean;
 declare function parseDateKey(dateKey: string): Date | null;
 declare function startOfMonth(date: Date): Date;
 declare function addMonths(date: Date, months: number): Date;
@@ -103,4 +107,4 @@ declare function monthDateKeys(month: Date): {
     toDate: string;
 };
 
-export { ALL_DAY_TIMES, type AvailabilityDays, AvailabilityMonthCalendar, type AvailabilityMonthCalendarProps, type AvailabilitySchedule, type AvailabilityScheduleId, type AvailabilityTime, BUSINESS_HOUR_END_MINUTES, BUSINESS_HOUR_START_MINUTES, DayEditor, type DayEditorProps, SLOT_STEP_MINUTES, type TimeRange, addMonths, clearDayTimes, defaultBusinessHourTimes, formatTimeAmPm, getDayTimes, getMonthGridDays, minutesToTimeLabel, monthDateKeys, monthLabel, normalizeAvailabilityTimes, parseDateKey, rangesToTimes, setDayTimes, startOfMonth, summarizeDayHours, timeToMinutes, timesToRanges, toDateKey };
+export { ALL_DAY_TIMES, type AvailabilityDays, AvailabilityMonthCalendar, type AvailabilityMonthCalendarProps, type AvailabilitySchedule, type AvailabilityScheduleId, type AvailabilityTime, BUSINESS_HOUR_END_MINUTES, BUSINESS_HOUR_START_MINUTES, DayEditor, type DayEditorProps, SLOT_STEP_MINUTES, type TimeRange, addMonths, clearDayTimes, defaultBusinessHourTimes, formatTimeAmPm, getDayTimes, getMonthGridDays, isDateKeyPast, minutesToTimeLabel, monthDateKeys, monthLabel, normalizeAvailabilityTimes, parseDateKey, rangesToTimes, setDayTimes, startOfMonth, summarizeDayHours, timeToMinutes, timesToRanges, toDateKey, toDateKeyInTimeZone };

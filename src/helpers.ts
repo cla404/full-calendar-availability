@@ -60,6 +60,36 @@ export function toDateKey(date: Date): string {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
 }
 
+/** `YYYY-MM-DD` for `date` in an IANA zone (falls back to local `toDateKey`). */
+export function toDateKeyInTimeZone(date: Date, timeZone?: string | null): string {
+  if (!timeZone) return toDateKey(date)
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(date)
+    const year = parts.find(p => p.type === "year")?.value
+    const month = parts.find(p => p.type === "month")?.value
+    const day = parts.find(p => p.type === "day")?.value
+    if (year && month && day) return `${year}-${month}-${day}`
+  } catch {
+    /* invalid zone */
+  }
+  return toDateKey(date)
+}
+
+/** True when `dateKey` is strictly before today's calendar date in `timeZone`. */
+export function isDateKeyPast(
+  dateKey: string,
+  now: Date = new Date(),
+  timeZone?: string | null
+): boolean {
+  const todayKey = toDateKeyInTimeZone(now, timeZone)
+  return dateKey < todayKey
+}
+
 export function parseDateKey(dateKey: string): Date | null {
   if (!DATE_RE.test(dateKey)) return null
   const [y, m, d] = dateKey.split("-").map(Number)

@@ -42,6 +42,7 @@ __export(index_exports, {
   formatTimeAmPm: () => formatTimeAmPm,
   getDayTimes: () => getDayTimes,
   getMonthGridDays: () => getMonthGridDays,
+  isDateKeyPast: () => isDateKeyPast,
   minutesToTimeLabel: () => minutesToTimeLabel,
   monthDateKeys: () => monthDateKeys,
   monthLabel: () => monthLabel,
@@ -53,7 +54,8 @@ __export(index_exports, {
   summarizeDayHours: () => summarizeDayHours,
   timeToMinutes: () => timeToMinutes,
   timesToRanges: () => timesToRanges,
-  toDateKey: () => toDateKey
+  toDateKey: () => toDateKey,
+  toDateKeyInTimeZone: () => toDateKeyInTimeZone
 });
 module.exports = __toCommonJS(index_exports);
 
@@ -113,6 +115,27 @@ function normalizeAvailabilityTimes(times) {
 function toDateKey(date) {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
 }
+function toDateKeyInTimeZone(date, timeZone) {
+  if (!timeZone) return toDateKey(date);
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(date);
+    const year = parts.find((p) => p.type === "year")?.value;
+    const month = parts.find((p) => p.type === "month")?.value;
+    const day = parts.find((p) => p.type === "day")?.value;
+    if (year && month && day) return `${year}-${month}-${day}`;
+  } catch {
+  }
+  return toDateKey(date);
+}
+function isDateKeyPast(dateKey, now = /* @__PURE__ */ new Date(), timeZone) {
+  const todayKey = toDateKeyInTimeZone(now, timeZone);
+  return dateKey < todayKey;
+}
 function parseDateKey(dateKey) {
   if (!DATE_RE.test(dateKey)) return null;
   const [y, m, d] = dateKey.split("-").map(Number);
@@ -140,9 +163,6 @@ function getMonthGridDays(month) {
 }
 function isSameMonth(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
-}
-function isSameDay(a, b) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 function timesToRanges(times) {
   const sorted = normalizeAvailabilityTimes(times);
@@ -401,6 +421,10 @@ function AvailabilityMonthCalendar(props) {
   const month = controlledMonth ? startOfMonth(controlledMonth) : internalMonth;
   const [selectedKey, setSelectedKey] = React2.useState(null);
   const today = React2.useMemo(() => /* @__PURE__ */ new Date(), []);
+  const todayKey = React2.useMemo(
+    () => toDateKeyInTimeZone(today, timeZone),
+    [today, timeZone]
+  );
   const gridDays = React2.useMemo(() => getMonthGridDays(month), [month]);
   function setMonth(next) {
     const normalized = startOfMonth(next);
@@ -488,7 +512,8 @@ function AvailabilityMonthCalendar(props) {
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "fca-month-grid", role: "grid", "aria-label": monthLabel(month), children: gridDays.map((day) => {
       const dateKey = toDateKey(day);
       const inMonth = isSameMonth(day, month);
-      const isToday = isSameDay(day, today);
+      const isToday = dateKey === todayKey;
+      const isPast = inMonth && isDateKeyPast(dateKey, today, timeZone);
       const isSelected = selectedKey === dateKey;
       const badges = schedules.map((schedule) => {
         const hasExplicit = isExplicitDay(schedule, dateKey);
@@ -502,7 +527,7 @@ function AvailabilityMonthCalendar(props) {
           hasExplicit,
           open,
           state,
-          summary: state ? badgeLabel(schedule.shortLabel, state) : `${schedule.shortLabel}: not set (default hours)`
+          summary: state ? badgeLabel(schedule.shortLabel, state) : `${schedule.shortLabel}: not set (not bookable)`
         };
       });
       const visibleBadges = badges.filter((badge) => badge.state !== null);
@@ -510,21 +535,26 @@ function AvailabilityMonthCalendar(props) {
       const anyExplicitClosed = badges.some(
         (badge) => badge.hasExplicit && !badge.open
       );
+      const statusParts = [
+        isPast ? "Past (not bookable for clients)" : null,
+        ...badges.map((b) => b.summary)
+      ].filter(Boolean);
       return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
         "button",
         {
           type: "button",
           role: "gridcell",
           disabled: disabled || !inMonth,
-          "aria-label": `${dateKey}, ${badges.map((b) => b.summary).join("; ")}`,
+          "aria-label": `${dateKey}, ${statusParts.join("; ")}`,
           "aria-pressed": isSelected,
           className: [
             "fca-day",
             inMonth ? "" : "is-outside",
             isToday ? "is-today" : "",
+            isPast ? "is-past" : "",
             isSelected ? "is-selected" : "",
-            anyExplicitOpen ? "is-open" : "",
-            anyExplicitClosed && !anyExplicitOpen ? "is-closed" : ""
+            anyExplicitOpen && !isPast ? "is-open" : "",
+            anyExplicitClosed && !anyExplicitOpen && !isPast ? "is-closed" : ""
           ].filter(Boolean).join(" "),
           onClick: () => {
             if (!inMonth || disabled) return;
@@ -532,18 +562,22 @@ function AvailabilityMonthCalendar(props) {
           },
           children: [
             /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "fca-day__number", children: day.getDate() }),
-            visibleBadges.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "fca-day__badges", children: visibleBadges.map((badge) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
-              "span",
-              {
-                className: [
-                  "fca-day__badge",
-                  `fca-day__badge--${badge.tone}`,
-                  badge.state === "off" ? "fca-day__badge--off" : ""
-                ].filter(Boolean).join(" "),
-                children: badge.summary
-              },
-              badge.id
-            )) }) : null
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "fca-day__badges", children: [
+              isPast ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "fca-day__badge fca-day__badge--past", children: "Past" }) : null,
+              visibleBadges.map((badge) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                "span",
+                {
+                  className: [
+                    "fca-day__badge",
+                    `fca-day__badge--${badge.tone}`,
+                    badge.state === "off" ? "fca-day__badge--off" : "",
+                    isPast ? "fca-day__badge--past-muted" : ""
+                  ].filter(Boolean).join(" "),
+                  children: badge.summary
+                },
+                badge.id
+              ))
+            ] })
           ]
         },
         dateKey
@@ -558,7 +592,7 @@ function AvailabilityMonthCalendar(props) {
             day: "numeric",
             year: "numeric"
           }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { className: "fca-day-panel__hint", children: multi ? "Both services on this day \u2014 edit each separately. Saving marks the day as an override." : "Set open hours for this day. Saving marks the day as an override." })
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { className: "fca-day-panel__hint", children: selectedKey && isDateKeyPast(selectedKey, today, timeZone) ? "This day is in the past \u2014 clients cannot book it. You can still edit or clear overrides." : multi ? "Both services on this day \u2014 edit each separately. Saving marks the day as an override." : "Set open hours for this day. Saving marks the day as an override." })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
           "button",
@@ -607,6 +641,7 @@ function AvailabilityMonthCalendar(props) {
   formatTimeAmPm,
   getDayTimes,
   getMonthGridDays,
+  isDateKeyPast,
   minutesToTimeLabel,
   monthDateKeys,
   monthLabel,
@@ -618,6 +653,7 @@ function AvailabilityMonthCalendar(props) {
   summarizeDayHours,
   timeToMinutes,
   timesToRanges,
-  toDateKey
+  toDateKey,
+  toDateKeyInTimeZone
 });
 //# sourceMappingURL=index.cjs.map

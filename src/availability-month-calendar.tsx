@@ -8,12 +8,13 @@ import {
   clearDayTimes,
   getDayTimes,
   getMonthGridDays,
-  isSameDay,
+  isDateKeyPast,
   isSameMonth,
   monthLabel,
   setDayTimes,
   startOfMonth,
   toDateKey,
+  toDateKeyInTimeZone,
 } from "./helpers"
 import type {
   AvailabilityMonthCalendarProps,
@@ -70,6 +71,10 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
   const month = controlledMonth ? startOfMonth(controlledMonth) : internalMonth
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null)
   const today = React.useMemo(() => new Date(), [])
+  const todayKey = React.useMemo(
+    () => toDateKeyInTimeZone(today, timeZone),
+    [today, timeZone]
+  )
   const gridDays = React.useMemo(() => getMonthGridDays(month), [month])
 
   function setMonth(next: Date) {
@@ -171,7 +176,8 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
         {gridDays.map(day => {
           const dateKey = toDateKey(day)
           const inMonth = isSameMonth(day, month)
-          const isToday = isSameDay(day, today)
+          const isToday = dateKey === todayKey
+          const isPast = inMonth && isDateKeyPast(dateKey, today, timeZone)
           const isSelected = selectedKey === dateKey
           const badges = schedules.map(schedule => {
             const hasExplicit = isExplicitDay(schedule, dateKey)
@@ -193,7 +199,7 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
               state,
               summary: state
                 ? badgeLabel(schedule.shortLabel, state)
-                : `${schedule.shortLabel}: not set (default hours)`,
+                : `${schedule.shortLabel}: not set (not bookable)`,
             }
           })
           const visibleBadges = badges.filter(badge => badge.state !== null)
@@ -201,6 +207,10 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
           const anyExplicitClosed = badges.some(
             badge => badge.hasExplicit && !badge.open
           )
+          const statusParts = [
+            isPast ? "Past (not bookable for clients)" : null,
+            ...badges.map(b => b.summary),
+          ].filter(Boolean)
 
           return (
             <button
@@ -208,15 +218,16 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
               type="button"
               role="gridcell"
               disabled={disabled || !inMonth}
-              aria-label={`${dateKey}, ${badges.map(b => b.summary).join("; ")}`}
+              aria-label={`${dateKey}, ${statusParts.join("; ")}`}
               aria-pressed={isSelected}
               className={[
                 "fca-day",
                 inMonth ? "" : "is-outside",
                 isToday ? "is-today" : "",
+                isPast ? "is-past" : "",
                 isSelected ? "is-selected" : "",
-                anyExplicitOpen ? "is-open" : "",
-                anyExplicitClosed && !anyExplicitOpen ? "is-closed" : "",
+                anyExplicitOpen && !isPast ? "is-open" : "",
+                anyExplicitClosed && !anyExplicitOpen && !isPast ? "is-closed" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -226,24 +237,26 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
               }}
             >
               <span className="fca-day__number">{day.getDate()}</span>
-              {visibleBadges.length > 0 ? (
-                <span className="fca-day__badges">
-                  {visibleBadges.map(badge => (
-                    <span
-                      key={badge.id}
-                      className={[
-                        "fca-day__badge",
-                        `fca-day__badge--${badge.tone}`,
-                        badge.state === "off" ? "fca-day__badge--off" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      {badge.summary}
-                    </span>
-                  ))}
-                </span>
-              ) : null}
+              <span className="fca-day__badges">
+                {isPast ? (
+                  <span className="fca-day__badge fca-day__badge--past">Past</span>
+                ) : null}
+                {visibleBadges.map(badge => (
+                  <span
+                    key={badge.id}
+                    className={[
+                      "fca-day__badge",
+                      `fca-day__badge--${badge.tone}`,
+                      badge.state === "off" ? "fca-day__badge--off" : "",
+                      isPast ? "fca-day__badge--past-muted" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    {badge.summary}
+                  </span>
+                ))}
+              </span>
             </button>
           )
         })}
@@ -262,9 +275,11 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
                 })}
               </h3>
               <p className="fca-day-panel__hint">
-                {multi
-                  ? "Both services on this day — edit each separately. Saving marks the day as an override."
-                  : "Set open hours for this day. Saving marks the day as an override."}
+                {selectedKey && isDateKeyPast(selectedKey, today, timeZone)
+                  ? "This day is in the past — clients cannot book it. You can still edit or clear overrides."
+                  : multi
+                    ? "Both services on this day — edit each separately. Saving marks the day as an override."
+                    : "Set open hours for this day. Saving marks the day as an override."}
               </p>
             </div>
             <button
