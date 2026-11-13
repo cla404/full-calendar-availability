@@ -1,0 +1,402 @@
+// src/availability-month-calendar.tsx
+import * as React2 from "react";
+
+// src/day-editor.tsx
+import * as React from "react";
+
+// src/helpers.ts
+var SLOT_STEP_MINUTES = 30;
+var BUSINESS_HOUR_START_MINUTES = 9 * 60;
+var BUSINESS_HOUR_END_MINUTES = 17 * 60;
+var TIME_RE = /^([01]\d|2[0-3]):(00|30)$/;
+var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+function minutesToTimeLabel(totalMinutes) {
+  const hours = Math.floor(totalMinutes / 60) % 24;
+  const minutes = totalMinutes % 60;
+  return `${pad2(hours)}:${pad2(minutes)}`;
+}
+function timeToMinutes(time) {
+  const [hours, minutes] = time.split(":").map(Number);
+  return (hours ?? 0) * 60 + (minutes ?? 0);
+}
+function formatTimeAmPm(time24h) {
+  const [hourPart, minutePart] = time24h.split(":");
+  const hour24 = Number(hourPart);
+  const minute = Number(minutePart);
+  if (!Number.isFinite(hour24) || !Number.isFinite(minute)) return time24h;
+  const period = hour24 >= 12 ? "PM" : "AM";
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  return `${hour12}:${pad2(minute)} ${period}`;
+}
+var ALL_DAY_TIMES = Array.from(
+  { length: 24 * 60 / SLOT_STEP_MINUTES },
+  (_, index) => minutesToTimeLabel(index * SLOT_STEP_MINUTES)
+);
+function defaultBusinessHourTimes() {
+  const times = [];
+  for (let m = BUSINESS_HOUR_START_MINUTES; m < BUSINESS_HOUR_END_MINUTES; m += SLOT_STEP_MINUTES) {
+    times.push(minutesToTimeLabel(m));
+  }
+  return times;
+}
+function normalizeAvailabilityTimes(times) {
+  const unique = /* @__PURE__ */ new Set();
+  for (const value of times) {
+    const trimmed = value.trim();
+    if (!TIME_RE.test(trimmed)) continue;
+    unique.add(trimmed);
+  }
+  return [...unique].sort();
+}
+function toDateKey(date) {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+function parseDateKey(dateKey) {
+  if (!DATE_RE.test(dateKey)) return null;
+  const [y, m, d] = dateKey.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const date = new Date(y, m - 1, d);
+  if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return null;
+  return date;
+}
+function startOfMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+function addMonths(date, months) {
+  return new Date(date.getFullYear(), date.getMonth() + months, 1);
+}
+function monthLabel(date) {
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+function getMonthGridDays(month) {
+  const first = startOfMonth(month);
+  const startOffset = (first.getDay() + 6) % 7;
+  const gridStart = new Date(first.getFullYear(), first.getMonth(), first.getDate() - startOffset);
+  return Array.from({ length: 42 }, (_, i) => {
+    return new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i);
+  });
+}
+function isSameMonth(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+function timesToRanges(times) {
+  const sorted = normalizeAvailabilityTimes(times);
+  if (sorted.length === 0) return [];
+  const ranges = [];
+  let rangeStart = sorted[0];
+  let prev = timeToMinutes(sorted[0]);
+  for (let i = 1; i < sorted.length; i++) {
+    const current = timeToMinutes(sorted[i]);
+    if (current !== prev + SLOT_STEP_MINUTES) {
+      ranges.push({
+        start: rangeStart,
+        end: minutesToTimeLabel(prev + SLOT_STEP_MINUTES)
+      });
+      rangeStart = sorted[i];
+    }
+    prev = current;
+  }
+  ranges.push({
+    start: rangeStart,
+    end: minutesToTimeLabel(prev + SLOT_STEP_MINUTES)
+  });
+  return ranges;
+}
+function rangesToTimes(ranges) {
+  const times = [];
+  for (const range of ranges) {
+    if (!TIME_RE.test(range.start)) continue;
+    let endMinutes = TIME_RE.test(range.end) ? timeToMinutes(range.end) : timeToMinutes(range.start) + SLOT_STEP_MINUTES;
+    if (endMinutes <= timeToMinutes(range.start)) {
+      endMinutes = timeToMinutes(range.start) + SLOT_STEP_MINUTES;
+    }
+    for (let m = timeToMinutes(range.start); m < endMinutes; m += SLOT_STEP_MINUTES) {
+      if (m >= 24 * 60) break;
+      times.push(minutesToTimeLabel(m));
+    }
+  }
+  return normalizeAvailabilityTimes(times);
+}
+function summarizeDayHours(times) {
+  if (times.length === 0) return "Closed";
+  if (times.length === ALL_DAY_TIMES.length) return "Open 24 hours";
+  const labels = timesToRanges(times).map(
+    (range) => `${formatTimeAmPm(range.start)} \u2013 ${formatTimeAmPm(range.end)}`
+  );
+  return labels.length > 2 ? `${labels.slice(0, 2).join(", ")} +${labels.length - 2} more` : labels.join(", ");
+}
+function setDayTimes(days, dateKey, times) {
+  return {
+    ...days,
+    [dateKey]: normalizeAvailabilityTimes(times)
+  };
+}
+function getDayTimes(days, dateKey) {
+  if (!Object.prototype.hasOwnProperty.call(days, dateKey)) return [];
+  return normalizeAvailabilityTimes(days[dateKey] ?? []);
+}
+function monthDateKeys(month) {
+  const start = startOfMonth(month);
+  const end = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  return { fromDate: toDateKey(start), toDate: toDateKey(end) };
+}
+
+// src/day-editor.tsx
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+var DAY_PERIODS = [
+  { label: "Overnight", range: "12 AM \u2013 6 AM" },
+  { label: "Morning", range: "6 AM \u2013 12 PM" },
+  { label: "Afternoon", range: "12 PM \u2013 6 PM" },
+  { label: "Evening", range: "6 PM \u2013 12 AM" }
+].map((period, index) => ({
+  ...period,
+  times: ALL_DAY_TIMES.slice(index * 12, index * 12 + 12)
+}));
+function DayEditor({
+  dateKey,
+  dateLabel,
+  times,
+  onChange,
+  onClose,
+  disabled = false
+}) {
+  const openTimes = React.useMemo(() => new Set(times), [times]);
+  const isOpen = openTimes.size > 0;
+  const isAllDay = openTimes.size === ALL_DAY_TIMES.length;
+  const [periodIndex, setPeriodIndex] = React.useState(1);
+  const period = DAY_PERIODS[periodIndex];
+  function setTimes(next) {
+    onChange(normalizeAvailabilityTimes(next));
+  }
+  function toggleTime(time) {
+    if (disabled) return;
+    if (openTimes.has(time)) {
+      setTimes(times.filter((value) => value !== time));
+    } else {
+      setTimes([...times, time]);
+    }
+  }
+  function setDayOpen(open) {
+    if (disabled) return;
+    setTimes(open ? defaultBusinessHourTimes() : []);
+  }
+  function toggleAllDay() {
+    if (disabled) return;
+    setTimes(isAllDay ? defaultBusinessHourTimes() : [...ALL_DAY_TIMES]);
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "fca-day-editor", role: "dialog", "aria-labelledby": `fca-day-${dateKey}`, children: [
+    /* @__PURE__ */ jsxs("div", { className: "fca-day-editor__header", children: [
+      /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx("h3", { id: `fca-day-${dateKey}`, className: "fca-day-editor__title", children: dateLabel }),
+        /* @__PURE__ */ jsx("p", { className: "fca-day-editor__summary", children: summarizeDayHours(times) })
+      ] }),
+      /* @__PURE__ */ jsx("button", { type: "button", className: "fca-btn fca-btn--ghost", onClick: onClose, children: "Done" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "fca-day-editor__toolbar", children: [
+      /* @__PURE__ */ jsxs("label", { className: "fca-switch", children: [
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            type: "checkbox",
+            checked: isOpen,
+            disabled,
+            onChange: (event) => setDayOpen(event.target.checked)
+          }
+        ),
+        /* @__PURE__ */ jsx("span", { children: isOpen ? "Open" : "Closed" })
+      ] }),
+      isOpen ? /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          className: `fca-chip${isAllDay ? " fca-chip--active" : ""}`,
+          "aria-pressed": isAllDay,
+          disabled,
+          onClick: toggleAllDay,
+          children: "24 hours"
+        }
+      ) : null
+    ] }),
+    isOpen ? /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx("div", { className: "fca-period-tabs", role: "tablist", "aria-label": "Part of the day", children: DAY_PERIODS.map((p, index) => /* @__PURE__ */ jsxs(
+        "button",
+        {
+          type: "button",
+          role: "tab",
+          "aria-selected": index === periodIndex,
+          className: `fca-period-tabs__item${index === periodIndex ? " is-active" : ""}`,
+          onClick: () => setPeriodIndex(index),
+          children: [
+            /* @__PURE__ */ jsx("span", { className: "fca-period-tabs__label", children: p.label }),
+            /* @__PURE__ */ jsx("span", { className: "fca-period-tabs__range", children: p.range })
+          ]
+        },
+        p.label
+      )) }),
+      /* @__PURE__ */ jsx("div", { className: "fca-slot-grid", children: period.times.map((time) => {
+        const open = openTimes.has(time);
+        return /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            "aria-pressed": open,
+            disabled,
+            "aria-label": `${formatTimeAmPm(time)}, ${open ? "open" : "blocked"}`,
+            className: `fca-slot${open ? " is-open" : " is-blocked"}`,
+            onClick: () => toggleTime(time),
+            children: formatTimeAmPm(time).replace(" ", "")
+          },
+          time
+        );
+      }) })
+    ] }) : /* @__PURE__ */ jsx("p", { className: "fca-day-editor__hint", children: "This day is closed. Turn it on to set open hours." })
+  ] });
+}
+
+// src/availability-month-calendar.tsx
+import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
+var WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+function AvailabilityMonthCalendar({
+  value,
+  onChange,
+  month: controlledMonth,
+  onMonthChange,
+  timeZone,
+  disabled = false,
+  className
+}) {
+  const [internalMonth, setInternalMonth] = React2.useState(
+    () => startOfMonth(controlledMonth ?? /* @__PURE__ */ new Date())
+  );
+  const month = controlledMonth ? startOfMonth(controlledMonth) : internalMonth;
+  const [selectedKey, setSelectedKey] = React2.useState(null);
+  const today = React2.useMemo(() => /* @__PURE__ */ new Date(), []);
+  const gridDays = React2.useMemo(() => getMonthGridDays(month), [month]);
+  function setMonth(next) {
+    const normalized = startOfMonth(next);
+    if (!controlledMonth) setInternalMonth(normalized);
+    onMonthChange?.(normalized);
+  }
+  const selectedDate = selectedKey ? gridDays.find((day) => toDateKey(day) === selectedKey) ?? null : null;
+  const selectedTimes = selectedKey ? getDayTimes(value, selectedKey) : [];
+  return /* @__PURE__ */ jsxs2("div", { className: ["fca-root", className].filter(Boolean).join(" "), children: [
+    /* @__PURE__ */ jsxs2("div", { className: "fca-header", children: [
+      /* @__PURE__ */ jsxs2("div", { className: "fca-header__nav", children: [
+        /* @__PURE__ */ jsx2(
+          "button",
+          {
+            type: "button",
+            className: "fca-btn fca-btn--ghost",
+            "aria-label": "Previous month",
+            disabled,
+            onClick: () => setMonth(addMonths(month, -1)),
+            children: "\u2039"
+          }
+        ),
+        /* @__PURE__ */ jsx2("h2", { className: "fca-header__title", children: monthLabel(month) }),
+        /* @__PURE__ */ jsx2(
+          "button",
+          {
+            type: "button",
+            className: "fca-btn fca-btn--ghost",
+            "aria-label": "Next month",
+            disabled,
+            onClick: () => setMonth(addMonths(month, 1)),
+            children: "\u203A"
+          }
+        )
+      ] }),
+      timeZone ? /* @__PURE__ */ jsxs2("p", { className: "fca-header__tz", children: [
+        timeZone.replace(/_/g, " "),
+        " \xB7 30-minute slots"
+      ] }) : /* @__PURE__ */ jsx2("p", { className: "fca-header__tz", children: "30-minute slots \xB7 click a day to set hours" })
+    ] }),
+    /* @__PURE__ */ jsx2("div", { className: "fca-weekdays", "aria-hidden": true, children: WEEKDAY_LABELS.map((label) => /* @__PURE__ */ jsx2("div", { className: "fca-weekdays__item", children: label }, label)) }),
+    /* @__PURE__ */ jsx2("div", { className: "fca-month-grid", role: "grid", "aria-label": monthLabel(month), children: gridDays.map((day) => {
+      const dateKey = toDateKey(day);
+      const inMonth = isSameMonth(day, month);
+      const times = getDayTimes(value, dateKey);
+      const hasExplicit = Object.prototype.hasOwnProperty.call(value, dateKey);
+      const open = times.length > 0;
+      const isToday = isSameDay(day, today);
+      const isSelected = selectedKey === dateKey;
+      return /* @__PURE__ */ jsxs2(
+        "button",
+        {
+          type: "button",
+          role: "gridcell",
+          disabled: disabled || !inMonth,
+          "aria-label": `${dateKey}, ${hasExplicit ? summarizeDayHours(times) : "not set"}`,
+          "aria-pressed": isSelected,
+          className: [
+            "fca-day",
+            inMonth ? "" : "is-outside",
+            isToday ? "is-today" : "",
+            isSelected ? "is-selected" : "",
+            hasExplicit && open ? "is-open" : "",
+            hasExplicit && !open ? "is-closed" : ""
+          ].filter(Boolean).join(" "),
+          onClick: () => {
+            if (!inMonth || disabled) return;
+            setSelectedKey(dateKey);
+          },
+          children: [
+            /* @__PURE__ */ jsx2("span", { className: "fca-day__number", children: day.getDate() }),
+            hasExplicit ? /* @__PURE__ */ jsx2("span", { className: "fca-day__badge", children: open ? `${times.length}` : "Off" }) : /* @__PURE__ */ jsx2("span", { className: "fca-day__badge fca-day__badge--muted", children: "\u2014" })
+          ]
+        },
+        dateKey
+      );
+    }) }),
+    selectedKey && selectedDate ? /* @__PURE__ */ jsx2(
+      DayEditor,
+      {
+        dateKey: selectedKey,
+        dateLabel: selectedDate.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric"
+        }),
+        times: selectedTimes,
+        disabled,
+        onClose: () => setSelectedKey(null),
+        onChange: (nextTimes) => {
+          onChange(setDayTimes(value, selectedKey, nextTimes));
+        }
+      }
+    ) : null
+  ] });
+}
+export {
+  ALL_DAY_TIMES,
+  AvailabilityMonthCalendar,
+  BUSINESS_HOUR_END_MINUTES,
+  BUSINESS_HOUR_START_MINUTES,
+  DayEditor,
+  SLOT_STEP_MINUTES,
+  addMonths,
+  defaultBusinessHourTimes,
+  formatTimeAmPm,
+  getDayTimes,
+  getMonthGridDays,
+  minutesToTimeLabel,
+  monthDateKeys,
+  monthLabel,
+  normalizeAvailabilityTimes,
+  parseDateKey,
+  rangesToTimes,
+  setDayTimes,
+  startOfMonth,
+  summarizeDayHours,
+  timeToMinutes,
+  timesToRanges,
+  toDateKey
+};
+//# sourceMappingURL=index.js.map
