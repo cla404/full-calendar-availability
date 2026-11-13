@@ -117,9 +117,17 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
     onChange?.(clearDayTimes(value ?? {}, dateKey))
   }
 
-  const selectedDate = selectedKey
-    ? gridDays.find(day => toDateKey(day) === selectedKey) ?? null
-    : null
+  const selectedIsPast =
+    selectedKey !== null && isDateKeyPast(selectedKey, today, timeZone)
+
+  React.useEffect(() => {
+    if (selectedIsPast) setSelectedKey(null)
+  }, [selectedIsPast])
+
+  const selectedDate =
+    selectedKey && !selectedIsPast
+      ? gridDays.find(day => toDateKey(day) === selectedKey) ?? null
+      : null
 
   return (
     <div className={["fca-root", className].filter(Boolean).join(" ")}>
@@ -208,7 +216,7 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
             badge => badge.hasExplicit && !badge.open
           )
           const statusParts = [
-            isPast ? "Past (not bookable for clients)" : null,
+            isPast ? "past (not editable)" : null,
             ...badges.map(b => b.summary),
           ].filter(Boolean)
 
@@ -217,7 +225,7 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
               key={dateKey}
               type="button"
               role="gridcell"
-              disabled={disabled || !inMonth}
+              disabled={disabled || !inMonth || isPast}
               aria-label={`${dateKey}, ${statusParts.join("; ")}`}
               aria-pressed={isSelected}
               className={[
@@ -232,31 +240,30 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
                 .filter(Boolean)
                 .join(" ")}
               onClick={() => {
-                if (!inMonth || disabled) return
+                if (!inMonth || disabled || isPast) return
                 setSelectedKey(dateKey)
               }}
             >
               <span className="fca-day__number">{day.getDate()}</span>
-              <span className="fca-day__badges">
-                {isPast ? (
-                  <span className="fca-day__badge fca-day__badge--past">Past</span>
-                ) : null}
-                {visibleBadges.map(badge => (
-                  <span
-                    key={badge.id}
-                    className={[
-                      "fca-day__badge",
-                      `fca-day__badge--${badge.tone}`,
-                      badge.state === "off" ? "fca-day__badge--off" : "",
-                      isPast ? "fca-day__badge--past-muted" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    {badge.summary}
-                  </span>
-                ))}
-              </span>
+              {visibleBadges.length > 0 ? (
+                <span className="fca-day__badges">
+                  {visibleBadges.map(badge => (
+                    <span
+                      key={badge.id}
+                      className={[
+                        "fca-day__badge",
+                        `fca-day__badge--${badge.tone}`,
+                        badge.state === "off" ? "fca-day__badge--off" : "",
+                        isPast ? "fca-day__badge--past-muted" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      {badge.summary}
+                    </span>
+                  ))}
+                </span>
+              ) : null}
             </button>
           )
         })}
@@ -275,11 +282,9 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
                 })}
               </h3>
               <p className="fca-day-panel__hint">
-                {selectedKey && isDateKeyPast(selectedKey, today, timeZone)
-                  ? "This day is in the past — clients cannot book it. You can still edit or clear overrides."
-                  : multi
-                    ? "Both services on this day — edit each separately. Saving marks the day as an override."
-                    : "Set open hours for this day. Saving marks the day as an override."}
+                {multi
+                  ? "Both services on this day — edit each separately. Saving marks the day as an override."
+                  : "Set open hours for this day. Saving marks the day as an override."}
               </p>
             </div>
             <button

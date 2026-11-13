@@ -463,7 +463,11 @@ function AvailabilityMonthCalendar(props) {
     }
     onChange?.(clearDayTimes(value ?? {}, dateKey));
   }
-  const selectedDate = selectedKey ? gridDays.find((day) => toDateKey(day) === selectedKey) ?? null : null;
+  const selectedIsPast = selectedKey !== null && isDateKeyPast(selectedKey, today, timeZone);
+  React2.useEffect(() => {
+    if (selectedIsPast) setSelectedKey(null);
+  }, [selectedIsPast]);
+  const selectedDate = selectedKey && !selectedIsPast ? gridDays.find((day) => toDateKey(day) === selectedKey) ?? null : null;
   return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: ["fca-root", className].filter(Boolean).join(" "), children: [
     /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "fca-header", children: [
       /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "fca-header__nav", children: [
@@ -536,7 +540,7 @@ function AvailabilityMonthCalendar(props) {
         (badge) => badge.hasExplicit && !badge.open
       );
       const statusParts = [
-        isPast ? "Past (not bookable for clients)" : null,
+        isPast ? "past (not editable)" : null,
         ...badges.map((b) => b.summary)
       ].filter(Boolean);
       return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
@@ -544,7 +548,7 @@ function AvailabilityMonthCalendar(props) {
         {
           type: "button",
           role: "gridcell",
-          disabled: disabled || !inMonth,
+          disabled: disabled || !inMonth || isPast,
           "aria-label": `${dateKey}, ${statusParts.join("; ")}`,
           "aria-pressed": isSelected,
           className: [
@@ -557,27 +561,24 @@ function AvailabilityMonthCalendar(props) {
             anyExplicitClosed && !anyExplicitOpen && !isPast ? "is-closed" : ""
           ].filter(Boolean).join(" "),
           onClick: () => {
-            if (!inMonth || disabled) return;
+            if (!inMonth || disabled || isPast) return;
             setSelectedKey(dateKey);
           },
           children: [
             /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "fca-day__number", children: day.getDate() }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "fca-day__badges", children: [
-              isPast ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "fca-day__badge fca-day__badge--past", children: "Past" }) : null,
-              visibleBadges.map((badge) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
-                "span",
-                {
-                  className: [
-                    "fca-day__badge",
-                    `fca-day__badge--${badge.tone}`,
-                    badge.state === "off" ? "fca-day__badge--off" : "",
-                    isPast ? "fca-day__badge--past-muted" : ""
-                  ].filter(Boolean).join(" "),
-                  children: badge.summary
-                },
-                badge.id
-              ))
-            ] })
+            visibleBadges.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "fca-day__badges", children: visibleBadges.map((badge) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+              "span",
+              {
+                className: [
+                  "fca-day__badge",
+                  `fca-day__badge--${badge.tone}`,
+                  badge.state === "off" ? "fca-day__badge--off" : "",
+                  isPast ? "fca-day__badge--past-muted" : ""
+                ].filter(Boolean).join(" "),
+                children: badge.summary
+              },
+              badge.id
+            )) }) : null
           ]
         },
         dateKey
@@ -592,7 +593,7 @@ function AvailabilityMonthCalendar(props) {
             day: "numeric",
             year: "numeric"
           }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { className: "fca-day-panel__hint", children: selectedKey && isDateKeyPast(selectedKey, today, timeZone) ? "This day is in the past \u2014 clients cannot book it. You can still edit or clear overrides." : multi ? "Both services on this day \u2014 edit each separately. Saving marks the day as an override." : "Set open hours for this day. Saving marks the day as an override." })
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { className: "fca-day-panel__hint", children: multi ? "Both services on this day \u2014 edit each separately. Saving marks the day as an override." : "Set open hours for this day. Saving marks the day as an override." })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
           "button",

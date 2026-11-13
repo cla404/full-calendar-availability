@@ -126,22 +126,15 @@
 }
 
 .fca-day.is-past {
-  opacity: 0.55;
-  background: color-mix(in oklab, currentColor 4%, transparent);
-  border-color: color-mix(in oklab, currentColor 10%, transparent);
-}
-
-.fca-day.is-past.is-selected {
-  opacity: 0.85;
+  opacity: 0.45;
+  background: color-mix(in oklab, currentColor 3%, transparent);
+  border-color: color-mix(in oklab, currentColor 8%, transparent);
+  cursor: not-allowed;
 }
 
 .fca-day__number {
   font-size: 0.8rem;
   font-weight: 600;
-}
-
-.fca-day.is-past .fca-day__number {
-  opacity: 0.75;
 }
 
 .fca-header__legend {
@@ -192,15 +185,8 @@
   opacity: 0.85;
 }
 
-.fca-day__badge--past {
-  background: color-mix(in oklab, currentColor 12%, transparent);
-  color: color-mix(in oklab, currentColor 75%, transparent);
-  font-weight: 600;
-  opacity: 0.95;
-}
-
 .fca-day__badge--past-muted {
-  opacity: 0.7;
+  opacity: 0.65;
 }
 
 .fca-day__badge--off {
