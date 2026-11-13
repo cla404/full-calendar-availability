@@ -290,6 +290,17 @@ function normalizeSchedules(props) {
     }
   ];
 }
+function isExplicitDay(schedule, dateKey) {
+  if (schedule.explicitDays !== void 0) {
+    return Object.prototype.hasOwnProperty.call(schedule.explicitDays, dateKey);
+  }
+  return Object.prototype.hasOwnProperty.call(schedule.days, dateKey);
+}
+function badgeLabel(shortLabel, state) {
+  if (state === "open") return `${shortLabel} Open`;
+  if (state === "off") return `${shortLabel} Off`;
+  return `${shortLabel} Default`;
+}
 function AvailabilityMonthCalendar(props) {
   const {
     schedules: schedulesProp,
@@ -316,15 +327,22 @@ function AvailabilityMonthCalendar(props) {
     if (!controlledMonth) setInternalMonth(normalized);
     onMonthChange?.(normalized);
   }
-  function updateScheduleDays(scheduleId, nextDays) {
+  function updateScheduleDay(scheduleId, dateKey, nextTimes) {
     if (multi) {
-      const next = schedules.map(
-        (schedule) => schedule.id === scheduleId ? { ...schedule, days: nextDays } : schedule
-      );
+      const next = schedules.map((schedule) => {
+        if (schedule.id !== scheduleId) return schedule;
+        const nextDays = setDayTimes(schedule.days, dateKey, nextTimes);
+        const nextExplicit = setDayTimes(schedule.explicitDays ?? {}, dateKey, nextTimes);
+        return {
+          ...schedule,
+          days: nextDays,
+          explicitDays: nextExplicit
+        };
+      });
       onSchedulesChange?.(next);
       return;
     }
-    onChange?.(nextDays);
+    onChange?.(setDayTimes(value ?? {}, dateKey, nextTimes));
   }
   const selectedDate = selectedKey ? gridDays.find((day) => toDateKey(day) === selectedKey) ?? null : null;
   return /* @__PURE__ */ jsxs2("div", { className: ["fca-root", className].filter(Boolean).join(" "), children: [
@@ -378,21 +396,24 @@ function AvailabilityMonthCalendar(props) {
       const isToday = isSameDay(day, today);
       const isSelected = selectedKey === dateKey;
       const badges = schedules.map((schedule) => {
-        const hasExplicit = Object.prototype.hasOwnProperty.call(schedule.days, dateKey);
+        const hasExplicit = isExplicitDay(schedule, dateKey);
         const times = getDayTimes(schedule.days, dateKey);
         const open = times.length > 0;
+        const state = hasExplicit ? open ? "open" : "off" : "default";
         return {
           id: schedule.id,
           shortLabel: schedule.shortLabel,
           tone: schedule.tone ?? "neutral",
           hasExplicit,
           open,
-          summary: hasExplicit ? open ? `${schedule.shortLabel} Open` : `${schedule.shortLabel} Off` : "not set"
+          state,
+          summary: badgeLabel(schedule.shortLabel, state)
         };
       });
-      const anyExplicit = badges.some((badge) => badge.hasExplicit);
-      const anyOpen = badges.some((badge) => badge.hasExplicit && badge.open);
-      const anyClosed = badges.some((badge) => badge.hasExplicit && !badge.open);
+      const anyOpen = badges.some((badge) => badge.open);
+      const anyExplicitClosed = badges.some(
+        (badge) => badge.hasExplicit && !badge.open
+      );
       return /* @__PURE__ */ jsxs2(
         "button",
         {
@@ -407,7 +428,8 @@ function AvailabilityMonthCalendar(props) {
             isToday ? "is-today" : "",
             isSelected ? "is-selected" : "",
             anyOpen ? "is-open" : "",
-            anyClosed && !anyOpen ? "is-closed" : ""
+            anyExplicitClosed && !anyOpen ? "is-closed" : "",
+            !anyOpen && !anyExplicitClosed && badges.every((b) => b.state === "default") ? "is-default" : ""
           ].filter(Boolean).join(" "),
           onClick: () => {
             if (!inMonth || disabled) return;
@@ -415,16 +437,18 @@ function AvailabilityMonthCalendar(props) {
           },
           children: [
             /* @__PURE__ */ jsx2("span", { className: "fca-day__number", children: day.getDate() }),
-            anyExplicit ? /* @__PURE__ */ jsx2("span", { className: "fca-day__badges", children: badges.map(
-              (badge) => badge.hasExplicit ? /* @__PURE__ */ jsx2(
-                "span",
-                {
-                  className: `fca-day__badge fca-day__badge--${badge.tone}`,
-                  children: badge.open ? `${badge.shortLabel} Open` : `${badge.shortLabel} Off`
-                },
-                badge.id
-              ) : null
-            ) }) : /* @__PURE__ */ jsx2("span", { className: "fca-day__badge fca-day__badge--muted", children: "\u2014" })
+            /* @__PURE__ */ jsx2("span", { className: "fca-day__badges", children: badges.map((badge) => /* @__PURE__ */ jsx2(
+              "span",
+              {
+                className: [
+                  "fca-day__badge",
+                  badge.state === "default" ? "fca-day__badge--default" : `fca-day__badge--${badge.tone}`,
+                  badge.state === "off" ? "fca-day__badge--off" : ""
+                ].filter(Boolean).join(" "),
+                children: badge.summary
+              },
+              badge.id
+            )) })
           ]
         },
         dateKey
@@ -439,7 +463,7 @@ function AvailabilityMonthCalendar(props) {
             day: "numeric",
             year: "numeric"
           }) }),
-          /* @__PURE__ */ jsx2("p", { className: "fca-day-panel__hint", children: multi ? "Both services on this day \u2014 edit each separately." : "Set open hours for this day." })
+          /* @__PURE__ */ jsx2("p", { className: "fca-day-panel__hint", children: multi ? "Both services on this day \u2014 edit each separately. Saving marks the day as an override." : "Set open hours for this day. Saving marks the day as an override." })
         ] }),
         /* @__PURE__ */ jsx2(
           "button",
@@ -462,10 +486,7 @@ function AvailabilityMonthCalendar(props) {
           times: getDayTimes(schedule.days, selectedKey),
           disabled,
           onChange: (nextTimes) => {
-            updateScheduleDays(
-              schedule.id,
-              setDayTimes(schedule.days, selectedKey, nextTimes)
-            );
+            updateScheduleDay(schedule.id, selectedKey, nextTimes);
           }
         },
         schedule.id

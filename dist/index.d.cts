@@ -16,7 +16,18 @@ interface AvailabilitySchedule {
     label: string;
     /** Accent used for badges / section chrome: "green" | "blue" | "neutral". */
     tone?: "green" | "blue" | "neutral";
+    /**
+     * Hours shown in the grid and day editor (effective availability).
+     * May include weekly/default fallbacks for dates not in `explicitDays`.
+     */
     days: AvailabilityDays;
+    /**
+     * Date keys the host has explicitly saved/overridden.
+     * Missing key → badge shows "Default" (fallback hours from `days`).
+     * Present with times → "Open"; present empty → "Off".
+     * When omitted, every key in `days` is treated as explicit (legacy).
+     */
+    explicitDays?: AvailabilityDays;
 }
 interface AvailabilityMonthCalendarProps {
     /**

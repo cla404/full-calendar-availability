@@ -50,7 +50,7 @@ type AvailabilityDays = Record<string, string[]>
 - Keys: `YYYY-MM-DD`
 - Values: open **start** times on `:00` / `:30` only
 - Empty array = day closed
-- Missing key = not explicitly set (host app can show weekly defaults)
+- For multi-schedule mode, pass `days` (effective hours shown) and optional `explicitDays` (saved overrides). Badges: **Open** / **Off** when explicit, **Default** when falling back to weekly/defaults.
 
 ## API
 
