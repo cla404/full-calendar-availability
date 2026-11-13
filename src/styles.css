@@ -145,16 +145,19 @@
 .fca-day__badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem;
+  gap: 0.15rem;
+  max-width: 100%;
 }
 
 .fca-day__badge {
-  font-size: 0.62rem;
+  font-size: 0.58rem;
+  line-height: 1.2;
   font-variant-numeric: tabular-nums;
   opacity: 0.95;
   border-radius: 999px;
-  padding: 0.05rem 0.35rem;
+  padding: 0.05rem 0.3rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .fca-day__badge--muted {

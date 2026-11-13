@@ -438,14 +438,14 @@ function AvailabilityMonthCalendar(props) {
       const badges = schedules.map((schedule) => {
         const hasExplicit = Object.prototype.hasOwnProperty.call(schedule.days, dateKey);
         const times = getDayTimes(schedule.days, dateKey);
+        const open = times.length > 0;
         return {
           id: schedule.id,
           shortLabel: schedule.shortLabel,
           tone: schedule.tone ?? "neutral",
           hasExplicit,
-          open: times.length > 0,
-          count: times.length,
-          summary: hasExplicit ? summarizeDayHours(times) : "not set"
+          open,
+          summary: hasExplicit ? open ? `${schedule.shortLabel} Open` : `${schedule.shortLabel} Off` : "not set"
         };
       });
       const anyExplicit = badges.some((badge) => badge.hasExplicit);
@@ -478,7 +478,7 @@ function AvailabilityMonthCalendar(props) {
                 "span",
                 {
                   className: `fca-day__badge fca-day__badge--${badge.tone}`,
-                  children: badge.open ? `${badge.shortLabel} ${badge.count}` : `${badge.shortLabel} Off`
+                  children: badge.open ? `${badge.shortLabel} Open` : `${badge.shortLabel} Off`
                 },
                 badge.id
               ) : null
