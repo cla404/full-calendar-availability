@@ -1,7 +1,7 @@
 {
   "name": "@cla404/full-calendar-availability",
-  "version": "0.1.0",
-  "description": "Month-first availability calendar for setting open hours on specific days (30-minute slots).",
+  "version": "0.2.0",
+  "description": "Month-first availability calendar with multi-purpose day schedules (30-minute slots).",
   "license": "MIT",
   "author": "cla404",
   "repository": {
@@ -45,10 +45,12 @@
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tsup": "^8.4.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vite": "^8.3.8"
   },
   "keywords": [
     "calendar",

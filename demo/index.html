@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Availability Calendar Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+        background: #f6f7f9;
+        color: #111827;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+      }
+      .card {
+        max-width: 720px;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 1.15rem;
+      }
+      .sub {
+        margin: 0 0 16px;
+        color: #6b7280;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Schedule & availability</h1>
+      <p class="sub">Click a day to set open hours · Asia/Manila · 30-minute slots</p>
+      <div id="root"></div>
+    </div>
+    <script type="module" src="/main.tsx"></script>
+  </body>
+</html>

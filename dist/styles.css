@@ -125,14 +125,106 @@
   font-weight: 600;
 }
 
+.fca-header__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+.fca-legend-item--green {
+  color: #065f46;
+}
+
+.fca-legend-item--blue {
+  color: #1e40af;
+}
+
+.fca-day__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
 .fca-day__badge {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-variant-numeric: tabular-nums;
-  opacity: 0.85;
+  opacity: 0.95;
+  border-radius: 999px;
+  padding: 0.05rem 0.35rem;
+  font-weight: 600;
 }
 
 .fca-day__badge--muted {
   opacity: 0.45;
+  padding: 0;
+  font-weight: 500;
+}
+
+.fca-day__badge--green {
+  background: color-mix(in oklab, #10b981 22%, transparent);
+  color: #065f46;
+}
+
+.fca-day__badge--blue {
+  background: color-mix(in oklab, #3b82f6 22%, transparent);
+  color: #1e40af;
+}
+
+.fca-day__badge--neutral {
+  background: color-mix(in oklab, currentColor 10%, transparent);
+}
+
+.fca-day-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  border: 1px solid color-mix(in oklab, currentColor 14%, transparent);
+  border-radius: 0.85rem;
+  padding: 0.85rem;
+  background: color-mix(in oklab, currentColor 2%, transparent);
+}
+
+.fca-day-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.fca-day-panel__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.fca-day-panel__hint {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.fca-day-editor--section {
+  margin: 0;
+}
+
+.fca-day-editor--green {
+  border-left: 4px solid #10b981;
+}
+
+.fca-day-editor--blue {
+  border-left: 4px solid #3b82f6;
+}
+
+.fca-day-editor--blue .fca-slot.is-open {
+  background: color-mix(in oklab, #3b82f6 22%, transparent);
+}
+
+.fca-day-editor--blue .fca-chip--active {
+  background: color-mix(in oklab, #3b82f6 18%, transparent);
+  border-color: color-mix(in oklab, #3b82f6 40%, transparent);
 }
 
 .fca-day-editor {

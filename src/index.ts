@@ -4,6 +4,8 @@ export type { DayEditorProps } from "./day-editor"
 export type {
   AvailabilityDays,
   AvailabilityMonthCalendarProps,
+  AvailabilitySchedule,
+  AvailabilityScheduleId,
   AvailabilityTime,
   TimeRange,
 } from "./types"

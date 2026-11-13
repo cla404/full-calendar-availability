@@ -164,13 +164,17 @@ function DayEditor({
   times,
   onChange,
   onClose,
-  disabled = false
+  disabled = false,
+  sectionTitle,
+  tone = "green",
+  showClose = true
 }) {
   const openTimes = React.useMemo(() => new Set(times), [times]);
   const isOpen = openTimes.size > 0;
   const isAllDay = openTimes.size === ALL_DAY_TIMES.length;
   const [periodIndex, setPeriodIndex] = React.useState(1);
   const period = DAY_PERIODS[periodIndex];
+  const titleId = sectionTitle ? `fca-day-${dateKey}-${sectionTitle.replace(/\s+/g, "-").toLowerCase()}` : `fca-day-${dateKey}`;
   function setTimes(next) {
     onChange(normalizeAvailabilityTimes(next));
   }
@@ -190,87 +194,116 @@ function DayEditor({
     if (disabled) return;
     setTimes(isAllDay ? defaultBusinessHourTimes() : [...ALL_DAY_TIMES]);
   }
-  return /* @__PURE__ */ jsxs("div", { className: "fca-day-editor", role: "dialog", "aria-labelledby": `fca-day-${dateKey}`, children: [
-    /* @__PURE__ */ jsxs("div", { className: "fca-day-editor__header", children: [
-      /* @__PURE__ */ jsxs("div", { children: [
-        /* @__PURE__ */ jsx("h3", { id: `fca-day-${dateKey}`, className: "fca-day-editor__title", children: dateLabel }),
-        /* @__PURE__ */ jsx("p", { className: "fca-day-editor__summary", children: summarizeDayHours(times) })
-      ] }),
-      /* @__PURE__ */ jsx("button", { type: "button", className: "fca-btn fca-btn--ghost", onClick: onClose, children: "Done" })
-    ] }),
-    /* @__PURE__ */ jsxs("div", { className: "fca-day-editor__toolbar", children: [
-      /* @__PURE__ */ jsxs("label", { className: "fca-switch", children: [
-        /* @__PURE__ */ jsx(
-          "input",
-          {
-            type: "checkbox",
-            checked: isOpen,
-            disabled,
-            onChange: (event) => setDayOpen(event.target.checked)
-          }
-        ),
-        /* @__PURE__ */ jsx("span", { children: isOpen ? "Open" : "Closed" })
-      ] }),
-      isOpen ? /* @__PURE__ */ jsx(
-        "button",
-        {
-          type: "button",
-          className: `fca-chip${isAllDay ? " fca-chip--active" : ""}`,
-          "aria-pressed": isAllDay,
-          disabled,
-          onClick: toggleAllDay,
-          children: "24 hours"
-        }
-      ) : null
-    ] }),
-    isOpen ? /* @__PURE__ */ jsxs(Fragment, { children: [
-      /* @__PURE__ */ jsx("div", { className: "fca-period-tabs", role: "tablist", "aria-label": "Part of the day", children: DAY_PERIODS.map((p, index) => /* @__PURE__ */ jsxs(
-        "button",
-        {
-          type: "button",
-          role: "tab",
-          "aria-selected": index === periodIndex,
-          className: `fca-period-tabs__item${index === periodIndex ? " is-active" : ""}`,
-          onClick: () => setPeriodIndex(index),
-          children: [
-            /* @__PURE__ */ jsx("span", { className: "fca-period-tabs__label", children: p.label }),
-            /* @__PURE__ */ jsx("span", { className: "fca-period-tabs__range", children: p.range })
-          ]
-        },
-        p.label
-      )) }),
-      /* @__PURE__ */ jsx("div", { className: "fca-slot-grid", children: period.times.map((time) => {
-        const open = openTimes.has(time);
-        return /* @__PURE__ */ jsx(
-          "button",
-          {
-            type: "button",
-            "aria-pressed": open,
-            disabled,
-            "aria-label": `${formatTimeAmPm(time)}, ${open ? "open" : "blocked"}`,
-            className: `fca-slot${open ? " is-open" : " is-blocked"}`,
-            onClick: () => toggleTime(time),
-            children: formatTimeAmPm(time).replace(" ", "")
-          },
-          time
-        );
-      }) })
-    ] }) : /* @__PURE__ */ jsx("p", { className: "fca-day-editor__hint", children: "This day is closed. Turn it on to set open hours." })
-  ] });
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      className: [
+        "fca-day-editor",
+        sectionTitle ? "fca-day-editor--section" : "",
+        `fca-day-editor--${tone}`
+      ].filter(Boolean).join(" "),
+      role: sectionTitle ? "group" : "dialog",
+      "aria-labelledby": titleId,
+      children: [
+        /* @__PURE__ */ jsxs("div", { className: "fca-day-editor__header", children: [
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("h3", { id: titleId, className: "fca-day-editor__title", children: sectionTitle ?? dateLabel }),
+            /* @__PURE__ */ jsx("p", { className: "fca-day-editor__summary", children: summarizeDayHours(times) })
+          ] }),
+          showClose && onClose ? /* @__PURE__ */ jsx("button", { type: "button", className: "fca-btn fca-btn--ghost", onClick: onClose, children: "Done" }) : null
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "fca-day-editor__toolbar", children: [
+          /* @__PURE__ */ jsxs("label", { className: "fca-switch", children: [
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                type: "checkbox",
+                checked: isOpen,
+                disabled,
+                onChange: (event) => setDayOpen(event.target.checked)
+              }
+            ),
+            /* @__PURE__ */ jsx("span", { children: isOpen ? "Open" : "Closed" })
+          ] }),
+          isOpen ? /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              className: `fca-chip${isAllDay ? " fca-chip--active" : ""}`,
+              "aria-pressed": isAllDay,
+              disabled,
+              onClick: toggleAllDay,
+              children: "24 hours"
+            }
+          ) : null
+        ] }),
+        isOpen ? /* @__PURE__ */ jsxs(Fragment, { children: [
+          /* @__PURE__ */ jsx("div", { className: "fca-period-tabs", role: "tablist", "aria-label": "Part of the day", children: DAY_PERIODS.map((p, index) => /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              role: "tab",
+              "aria-selected": index === periodIndex,
+              className: `fca-period-tabs__item${index === periodIndex ? " is-active" : ""}`,
+              onClick: () => setPeriodIndex(index),
+              children: [
+                /* @__PURE__ */ jsx("span", { className: "fca-period-tabs__label", children: p.label }),
+                /* @__PURE__ */ jsx("span", { className: "fca-period-tabs__range", children: p.range })
+              ]
+            },
+            p.label
+          )) }),
+          /* @__PURE__ */ jsx("div", { className: "fca-slot-grid", children: period.times.map((time) => {
+            const open = openTimes.has(time);
+            return /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                "aria-pressed": open,
+                disabled,
+                "aria-label": `${formatTimeAmPm(time)}, ${open ? "open" : "blocked"}`,
+                className: `fca-slot${open ? " is-open" : " is-blocked"}`,
+                onClick: () => toggleTime(time),
+                children: formatTimeAmPm(time).replace(" ", "")
+              },
+              time
+            );
+          }) })
+        ] }) : /* @__PURE__ */ jsx("p", { className: "fca-day-editor__hint", children: "This day is closed. Turn it on to set open hours." })
+      ]
+    }
+  );
 }
 
 // src/availability-month-calendar.tsx
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
 var WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-function AvailabilityMonthCalendar({
-  value,
-  onChange,
-  month: controlledMonth,
-  onMonthChange,
-  timeZone,
-  disabled = false,
-  className
-}) {
+function normalizeSchedules(props) {
+  if (props.schedules && props.schedules.length > 0) return props.schedules;
+  return [
+    {
+      id: "default",
+      shortLabel: "Open",
+      label: "Availability",
+      tone: "green",
+      days: props.value ?? {}
+    }
+  ];
+}
+function AvailabilityMonthCalendar(props) {
+  const {
+    schedules: schedulesProp,
+    onSchedulesChange,
+    value,
+    onChange,
+    month: controlledMonth,
+    onMonthChange,
+    timeZone,
+    disabled = false,
+    className
+  } = props;
+  const schedules = normalizeSchedules(props);
+  const multi = Boolean(schedulesProp && schedulesProp.length > 0);
   const [internalMonth, setInternalMonth] = React2.useState(
     () => startOfMonth(controlledMonth ?? /* @__PURE__ */ new Date())
   );
@@ -283,8 +316,17 @@ function AvailabilityMonthCalendar({
     if (!controlledMonth) setInternalMonth(normalized);
     onMonthChange?.(normalized);
   }
+  function updateScheduleDays(scheduleId, nextDays) {
+    if (multi) {
+      const next = schedules.map(
+        (schedule) => schedule.id === scheduleId ? { ...schedule, days: nextDays } : schedule
+      );
+      onSchedulesChange?.(next);
+      return;
+    }
+    onChange?.(nextDays);
+  }
   const selectedDate = selectedKey ? gridDays.find((day) => toDateKey(day) === selectedKey) ?? null : null;
-  const selectedTimes = selectedKey ? getDayTimes(value, selectedKey) : [];
   return /* @__PURE__ */ jsxs2("div", { className: ["fca-root", className].filter(Boolean).join(" "), children: [
     /* @__PURE__ */ jsxs2("div", { className: "fca-header", children: [
       /* @__PURE__ */ jsxs2("div", { className: "fca-header__nav", children: [
@@ -315,32 +357,57 @@ function AvailabilityMonthCalendar({
       timeZone ? /* @__PURE__ */ jsxs2("p", { className: "fca-header__tz", children: [
         timeZone.replace(/_/g, " "),
         " \xB7 30-minute slots"
-      ] }) : /* @__PURE__ */ jsx2("p", { className: "fca-header__tz", children: "30-minute slots \xB7 click a day to set hours" })
+      ] }) : /* @__PURE__ */ jsx2("p", { className: "fca-header__tz", children: "30-minute slots \xB7 click a day to set hours" }),
+      multi ? /* @__PURE__ */ jsx2("p", { className: "fca-header__legend", children: schedules.map((schedule) => /* @__PURE__ */ jsxs2(
+        "span",
+        {
+          className: `fca-legend-item fca-legend-item--${schedule.tone ?? "neutral"}`,
+          children: [
+            schedule.shortLabel,
+            " = ",
+            schedule.label
+          ]
+        },
+        schedule.id
+      )) }) : null
     ] }),
     /* @__PURE__ */ jsx2("div", { className: "fca-weekdays", "aria-hidden": true, children: WEEKDAY_LABELS.map((label) => /* @__PURE__ */ jsx2("div", { className: "fca-weekdays__item", children: label }, label)) }),
     /* @__PURE__ */ jsx2("div", { className: "fca-month-grid", role: "grid", "aria-label": monthLabel(month), children: gridDays.map((day) => {
       const dateKey = toDateKey(day);
       const inMonth = isSameMonth(day, month);
-      const times = getDayTimes(value, dateKey);
-      const hasExplicit = Object.prototype.hasOwnProperty.call(value, dateKey);
-      const open = times.length > 0;
       const isToday = isSameDay(day, today);
       const isSelected = selectedKey === dateKey;
+      const badges = schedules.map((schedule) => {
+        const hasExplicit = Object.prototype.hasOwnProperty.call(schedule.days, dateKey);
+        const times = getDayTimes(schedule.days, dateKey);
+        return {
+          id: schedule.id,
+          shortLabel: schedule.shortLabel,
+          tone: schedule.tone ?? "neutral",
+          hasExplicit,
+          open: times.length > 0,
+          count: times.length,
+          summary: hasExplicit ? summarizeDayHours(times) : "not set"
+        };
+      });
+      const anyExplicit = badges.some((badge) => badge.hasExplicit);
+      const anyOpen = badges.some((badge) => badge.hasExplicit && badge.open);
+      const anyClosed = badges.some((badge) => badge.hasExplicit && !badge.open);
       return /* @__PURE__ */ jsxs2(
         "button",
         {
           type: "button",
           role: "gridcell",
           disabled: disabled || !inMonth,
-          "aria-label": `${dateKey}, ${hasExplicit ? summarizeDayHours(times) : "not set"}`,
+          "aria-label": `${dateKey}, ${badges.map((b) => `${b.shortLabel}: ${b.summary}`).join("; ")}`,
           "aria-pressed": isSelected,
           className: [
             "fca-day",
             inMonth ? "" : "is-outside",
             isToday ? "is-today" : "",
             isSelected ? "is-selected" : "",
-            hasExplicit && open ? "is-open" : "",
-            hasExplicit && !open ? "is-closed" : ""
+            anyOpen ? "is-open" : "",
+            anyClosed && !anyOpen ? "is-closed" : ""
           ].filter(Boolean).join(" "),
           onClick: () => {
             if (!inMonth || disabled) return;
@@ -348,30 +415,62 @@ function AvailabilityMonthCalendar({
           },
           children: [
             /* @__PURE__ */ jsx2("span", { className: "fca-day__number", children: day.getDate() }),
-            hasExplicit ? /* @__PURE__ */ jsx2("span", { className: "fca-day__badge", children: open ? `${times.length}` : "Off" }) : /* @__PURE__ */ jsx2("span", { className: "fca-day__badge fca-day__badge--muted", children: "\u2014" })
+            anyExplicit ? /* @__PURE__ */ jsx2("span", { className: "fca-day__badges", children: badges.map(
+              (badge) => badge.hasExplicit ? /* @__PURE__ */ jsx2(
+                "span",
+                {
+                  className: `fca-day__badge fca-day__badge--${badge.tone}`,
+                  children: badge.open ? `${badge.shortLabel} ${badge.count}` : `${badge.shortLabel} Off`
+                },
+                badge.id
+              ) : null
+            ) }) : /* @__PURE__ */ jsx2("span", { className: "fca-day__badge fca-day__badge--muted", children: "\u2014" })
           ]
         },
         dateKey
       );
     }) }),
-    selectedKey && selectedDate ? /* @__PURE__ */ jsx2(
-      DayEditor,
-      {
-        dateKey: selectedKey,
-        dateLabel: selectedDate.toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric"
-        }),
-        times: selectedTimes,
-        disabled,
-        onClose: () => setSelectedKey(null),
-        onChange: (nextTimes) => {
-          onChange(setDayTimes(value, selectedKey, nextTimes));
-        }
-      }
-    ) : null
+    selectedKey && selectedDate ? /* @__PURE__ */ jsxs2("div", { className: "fca-day-panel", children: [
+      /* @__PURE__ */ jsxs2("div", { className: "fca-day-panel__header", children: [
+        /* @__PURE__ */ jsxs2("div", { children: [
+          /* @__PURE__ */ jsx2("h3", { className: "fca-day-panel__title", children: selectedDate.toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric"
+          }) }),
+          /* @__PURE__ */ jsx2("p", { className: "fca-day-panel__hint", children: multi ? "Both services on this day \u2014 edit each separately." : "Set open hours for this day." })
+        ] }),
+        /* @__PURE__ */ jsx2(
+          "button",
+          {
+            type: "button",
+            className: "fca-btn fca-btn--ghost",
+            onClick: () => setSelectedKey(null),
+            children: "Done"
+          }
+        )
+      ] }),
+      schedules.map((schedule) => /* @__PURE__ */ jsx2(
+        DayEditor,
+        {
+          dateKey: selectedKey,
+          dateLabel: schedule.label,
+          sectionTitle: schedule.label,
+          tone: schedule.tone ?? "green",
+          showClose: false,
+          times: getDayTimes(schedule.days, selectedKey),
+          disabled,
+          onChange: (nextTimes) => {
+            updateScheduleDays(
+              schedule.id,
+              setDayTimes(schedule.days, selectedKey, nextTimes)
+            );
+          }
+        },
+        schedule.id
+      ))
+    ] }) : null
   ] });
 }
 export {

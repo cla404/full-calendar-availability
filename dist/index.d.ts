@@ -7,11 +7,28 @@ interface TimeRange {
     start: string;
     end: string;
 }
+type AvailabilityScheduleId = string;
+interface AvailabilitySchedule {
+    id: AvailabilityScheduleId;
+    /** Short badge label, e.g. "N" or "C". */
+    shortLabel: string;
+    /** Full section title, e.g. "Notarization". */
+    label: string;
+    /** Accent used for badges / section chrome: "green" | "blue" | "neutral". */
+    tone?: "green" | "blue" | "neutral";
+    days: AvailabilityDays;
+}
 interface AvailabilityMonthCalendarProps {
-    /** Controlled map of date → open start times. */
-    value: AvailabilityDays;
-    /** Called with the full next days map after any edit. */
-    onChange: (next: AvailabilityDays) => void;
+    /**
+     * Multi-purpose schedules shown on one month grid.
+     * Prefer this over `value` / `onChange` for dual notarization + consultation.
+     */
+    schedules?: AvailabilitySchedule[];
+    onSchedulesChange?: (next: AvailabilitySchedule[]) => void;
+    /** Controlled map of date → open start times (single-schedule mode). */
+    value?: AvailabilityDays;
+    /** Called with the full next days map after any edit (single-schedule mode). */
+    onChange?: (next: AvailabilityDays) => void;
     /** Month to display (any date within the month). Defaults to today. */
     month?: Date;
     /** Called when the user navigates to another month. */
@@ -24,17 +41,21 @@ interface AvailabilityMonthCalendarProps {
     className?: string;
 }
 
-declare function AvailabilityMonthCalendar({ value, onChange, month: controlledMonth, onMonthChange, timeZone, disabled, className, }: AvailabilityMonthCalendarProps): React.JSX.Element;
+declare function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps): React.JSX.Element;
 
 interface DayEditorProps {
     dateKey: string;
     dateLabel: string;
     times: string[];
     onChange: (times: string[]) => void;
-    onClose: () => void;
+    onClose?: () => void;
     disabled?: boolean;
+    /** When set, renders as a labeled purpose section (no Done button). */
+    sectionTitle?: string;
+    tone?: "green" | "blue" | "neutral";
+    showClose?: boolean;
 }
-declare function DayEditor({ dateKey, dateLabel, times, onChange, onClose, disabled, }: DayEditorProps): React.JSX.Element;
+declare function DayEditor({ dateKey, dateLabel, times, onChange, onClose, disabled, sectionTitle, tone, showClose, }: DayEditorProps): React.JSX.Element;
 
 declare const SLOT_STEP_MINUTES = 30;
 declare const BUSINESS_HOUR_START_MINUTES: number;
@@ -65,4 +86,4 @@ declare function monthDateKeys(month: Date): {
     toDate: string;
 };
 
-export { ALL_DAY_TIMES, type AvailabilityDays, AvailabilityMonthCalendar, type AvailabilityMonthCalendarProps, type AvailabilityTime, BUSINESS_HOUR_END_MINUTES, BUSINESS_HOUR_START_MINUTES, DayEditor, type DayEditorProps, SLOT_STEP_MINUTES, type TimeRange, addMonths, defaultBusinessHourTimes, formatTimeAmPm, getDayTimes, getMonthGridDays, minutesToTimeLabel, monthDateKeys, monthLabel, normalizeAvailabilityTimes, parseDateKey, rangesToTimes, setDayTimes, startOfMonth, summarizeDayHours, timeToMinutes, timesToRanges, toDateKey };
+export { ALL_DAY_TIMES, type AvailabilityDays, AvailabilityMonthCalendar, type AvailabilityMonthCalendarProps, type AvailabilitySchedule, type AvailabilityScheduleId, type AvailabilityTime, BUSINESS_HOUR_END_MINUTES, BUSINESS_HOUR_START_MINUTES, DayEditor, type DayEditorProps, SLOT_STEP_MINUTES, type TimeRange, addMonths, defaultBusinessHourTimes, formatTimeAmPm, getDayTimes, getMonthGridDays, minutesToTimeLabel, monthDateKeys, monthLabel, normalizeAvailabilityTimes, parseDateKey, rangesToTimes, setDayTimes, startOfMonth, summarizeDayHours, timeToMinutes, timesToRanges, toDateKey };

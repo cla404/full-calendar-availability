@@ -25,8 +25,12 @@ export interface DayEditorProps {
   dateLabel: string
   times: string[]
   onChange: (times: string[]) => void
-  onClose: () => void
+  onClose?: () => void
   disabled?: boolean
+  /** When set, renders as a labeled purpose section (no Done button). */
+  sectionTitle?: string
+  tone?: "green" | "blue" | "neutral"
+  showClose?: boolean
 }
 
 export function DayEditor({
@@ -36,12 +40,18 @@ export function DayEditor({
   onChange,
   onClose,
   disabled = false,
+  sectionTitle,
+  tone = "green",
+  showClose = true,
 }: DayEditorProps) {
   const openTimes = React.useMemo(() => new Set(times), [times])
   const isOpen = openTimes.size > 0
   const isAllDay = openTimes.size === ALL_DAY_TIMES.length
   const [periodIndex, setPeriodIndex] = React.useState(1)
   const period = DAY_PERIODS[periodIndex]!
+  const titleId = sectionTitle
+    ? `fca-day-${dateKey}-${sectionTitle.replace(/\s+/g, "-").toLowerCase()}`
+    : `fca-day-${dateKey}`
 
   function setTimes(next: string[]) {
     onChange(normalizeAvailabilityTimes(next))
@@ -67,17 +77,29 @@ export function DayEditor({
   }
 
   return (
-    <div className="fca-day-editor" role="dialog" aria-labelledby={`fca-day-${dateKey}`}>
+    <div
+      className={[
+        "fca-day-editor",
+        sectionTitle ? "fca-day-editor--section" : "",
+        `fca-day-editor--${tone}`,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      role={sectionTitle ? "group" : "dialog"}
+      aria-labelledby={titleId}
+    >
       <div className="fca-day-editor__header">
         <div>
-          <h3 id={`fca-day-${dateKey}`} className="fca-day-editor__title">
-            {dateLabel}
+          <h3 id={titleId} className="fca-day-editor__title">
+            {sectionTitle ?? dateLabel}
           </h3>
           <p className="fca-day-editor__summary">{summarizeDayHours(times)}</p>
         </div>
-        <button type="button" className="fca-btn fca-btn--ghost" onClick={onClose}>
-          Done
-        </button>
+        {showClose && onClose ? (
+          <button type="button" className="fca-btn fca-btn--ghost" onClick={onClose}>
+            Done
+          </button>
+        ) : null}
       </div>
 
       <div className="fca-day-editor__toolbar">
