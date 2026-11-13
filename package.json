@@ -1,0 +1,60 @@
+{
+  "name": "@cla404/full-calendar-availability",
+  "version": "0.1.0",
+  "description": "Month-first availability calendar for setting open hours on specific days (30-minute slots).",
+  "license": "MIT",
+  "author": "cla404",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cla404/full-calendar-availability.git"
+  },
+  "homepage": "https://github.com/cla404/full-calendar-availability#readme",
+  "bugs": {
+    "url": "https://github.com/cla404/full-calendar-availability/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsup && cp src/styles.css dist/styles.css",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "keywords": [
+    "calendar",
+    "availability",
+    "scheduling",
+    "react",
+    "month-calendar"
+  ]
+}

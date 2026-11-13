@@ -1,0 +1,274 @@
+.fca-root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-family: inherit;
+  color: inherit;
+}
+
+.fca-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.fca-header__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.fca-header__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.fca-header__tz {
+  margin: 0;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.fca-btn {
+  appearance: none;
+  border: 1px solid color-mix(in oklab, currentColor 20%, transparent);
+  background: transparent;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.fca-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fca-btn--ghost {
+  border-color: transparent;
+  font-size: 1.25rem;
+  line-height: 1;
+  min-width: 2rem;
+}
+
+.fca-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+.fca-weekdays__item {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.65;
+  padding: 0.25rem 0;
+}
+
+.fca-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+.fca-day {
+  appearance: none;
+  border: 1px solid color-mix(in oklab, currentColor 12%, transparent);
+  background: color-mix(in oklab, currentColor 3%, transparent);
+  border-radius: 0.65rem;
+  min-height: 3.25rem;
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.25rem;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.fca-day:hover:not(:disabled) {
+  background: color-mix(in oklab, currentColor 8%, transparent);
+}
+
+.fca-day:disabled,
+.fca-day.is-outside {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.fca-day.is-today {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 35%, transparent);
+}
+
+.fca-day.is-selected {
+  outline: 2px solid color-mix(in oklab, currentColor 45%, transparent);
+  outline-offset: 1px;
+}
+
+.fca-day.is-open {
+  background: color-mix(in oklab, #10b981 18%, transparent);
+  border-color: color-mix(in oklab, #10b981 35%, transparent);
+}
+
+.fca-day.is-closed {
+  background: color-mix(in oklab, #f43f5e 12%, transparent);
+  border-color: color-mix(in oklab, #f43f5e 28%, transparent);
+}
+
+.fca-day__number {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.fca-day__badge {
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.fca-day__badge--muted {
+  opacity: 0.45;
+}
+
+.fca-day-editor {
+  border: 1px solid color-mix(in oklab, currentColor 14%, transparent);
+  border-radius: 0.85rem;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: color-mix(in oklab, currentColor 2%, transparent);
+}
+
+.fca-day-editor__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.fca-day-editor__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.fca-day-editor__summary,
+.fca-day-editor__hint {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.fca-day-editor__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.fca-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.fca-chip {
+  appearance: none;
+  border: 1px solid color-mix(in oklab, currentColor 18%, transparent);
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: inherit;
+}
+
+.fca-chip--active {
+  background: color-mix(in oklab, #10b981 18%, transparent);
+  border-color: color-mix(in oklab, #10b981 40%, transparent);
+}
+
+.fca-period-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+@media (min-width: 640px) {
+  .fca-period-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.fca-period-tabs__item {
+  appearance: none;
+  border: 0;
+  border-radius: 0.65rem;
+  background: color-mix(in oklab, currentColor 5%, transparent);
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.fca-period-tabs__item.is-active {
+  background: color-mix(in oklab, currentColor 12%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, currentColor 18%, transparent);
+}
+
+.fca-period-tabs__label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.fca-period-tabs__range {
+  display: block;
+  font-size: 0.65rem;
+  opacity: 0.65;
+  font-variant-numeric: tabular-nums;
+}
+
+.fca-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .fca-slot-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+.fca-slot {
+  appearance: none;
+  border: 0;
+  border-radius: 0.4rem;
+  height: 1.6rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.fca-slot.is-open {
+  background: color-mix(in oklab, #10b981 22%, transparent);
+  color: inherit;
+}
+
+.fca-slot.is-blocked {
+  background: color-mix(in oklab, #f43f5e 16%, transparent);
+  text-decoration: line-through;
+  opacity: 0.85;
+}
