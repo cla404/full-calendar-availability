@@ -5,6 +5,7 @@ import * as React from "react"
 import { DayEditor } from "./day-editor"
 import {
   addMonths,
+  clearDayTimes,
   getDayTimes,
   getMonthGridDays,
   isSameDay,
@@ -93,6 +94,22 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
       return
     }
     onChange?.(setDayTimes(value ?? {}, dateKey, nextTimes))
+  }
+
+  function clearScheduleDay(scheduleId: string, dateKey: string) {
+    if (multi) {
+      const next = schedules.map(schedule => {
+        if (schedule.id !== scheduleId) return schedule
+        return {
+          ...schedule,
+          days: clearDayTimes(schedule.days, dateKey),
+          explicitDays: clearDayTimes(schedule.explicitDays ?? {}, dateKey),
+        }
+      })
+      onSchedulesChange?.(next)
+      return
+    }
+    onChange?.(clearDayTimes(value ?? {}, dateKey))
   }
 
   const selectedDate = selectedKey
@@ -268,6 +285,10 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
               showClose={false}
               times={getDayTimes(schedule.days, selectedKey)}
               disabled={disabled}
+              isOverride={isExplicitDay(schedule, selectedKey)}
+              onClearOverride={() => {
+                clearScheduleDay(schedule.id, selectedKey)
+              }}
               onChange={nextTimes => {
                 updateScheduleDay(schedule.id, selectedKey, nextTimes)
               }}

@@ -167,6 +167,14 @@ export function setDayTimes(
   }
 }
 
+/** Remove a date key so the day is blank (no override). */
+export function clearDayTimes(days: AvailabilityDays, dateKey: string): AvailabilityDays {
+  if (!Object.prototype.hasOwnProperty.call(days, dateKey)) return days
+  const next = { ...days }
+  delete next[dateKey]
+  return next
+}
+
 export function getDayTimes(days: AvailabilityDays, dateKey: string): string[] {
   if (!Object.prototype.hasOwnProperty.call(days, dateKey)) return []
   return normalizeAvailabilityTimes(days[dateKey] ?? [])

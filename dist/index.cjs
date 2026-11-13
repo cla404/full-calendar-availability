@@ -37,6 +37,7 @@ __export(index_exports, {
   DayEditor: () => DayEditor,
   SLOT_STEP_MINUTES: () => SLOT_STEP_MINUTES,
   addMonths: () => addMonths,
+  clearDayTimes: () => clearDayTimes,
   defaultBusinessHourTimes: () => defaultBusinessHourTimes,
   formatTimeAmPm: () => formatTimeAmPm,
   getDayTimes: () => getDayTimes,
@@ -195,6 +196,12 @@ function setDayTimes(days, dateKey, times) {
     [dateKey]: normalizeAvailabilityTimes(times)
   };
 }
+function clearDayTimes(days, dateKey) {
+  if (!Object.prototype.hasOwnProperty.call(days, dateKey)) return days;
+  const next = { ...days };
+  delete next[dateKey];
+  return next;
+}
 function getDayTimes(days, dateKey) {
   if (!Object.prototype.hasOwnProperty.call(days, dateKey)) return [];
   return normalizeAvailabilityTimes(days[dateKey] ?? []);
@@ -225,7 +232,9 @@ function DayEditor({
   disabled = false,
   sectionTitle,
   tone = "green",
-  showClose = true
+  showClose = true,
+  isOverride = false,
+  onClearOverride
 }) {
   const openTimes = React.useMemo(() => new Set(times), [times]);
   const isOpen = openTimes.size > 0;
@@ -281,19 +290,34 @@ function DayEditor({
                 onChange: (event) => setDayOpen(event.target.checked)
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: isOpen ? "Open" : "Closed" })
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: isOpen ? "Open" : isOverride ? "Off" : "Closed" })
           ] }),
-          isOpen ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "button",
-            {
-              type: "button",
-              className: `fca-chip${isAllDay ? " fca-chip--active" : ""}`,
-              "aria-pressed": isAllDay,
-              disabled,
-              onClick: toggleAllDay,
-              children: "24 hours"
-            }
-          ) : null
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fca-day-editor__toolbar-actions", children: [
+            isOpen ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+              "button",
+              {
+                type: "button",
+                className: `fca-chip${isAllDay ? " fca-chip--active" : ""}`,
+                "aria-pressed": isAllDay,
+                disabled,
+                onClick: toggleAllDay,
+                children: "24 hours"
+              }
+            ) : null,
+            isOverride && onClearOverride ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+              "button",
+              {
+                type: "button",
+                className: "fca-chip",
+                disabled,
+                onClick: () => {
+                  if (disabled) return;
+                  onClearOverride();
+                },
+                children: "Clear override"
+              }
+            ) : null
+          ] })
         ] }),
         isOpen ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fca-period-tabs", role: "tablist", "aria-label": "Part of the day", children: DAY_PERIODS.map((p, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
@@ -327,7 +351,7 @@ function DayEditor({
               time
             );
           }) })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "fca-day-editor__hint", children: "This day is closed. Turn it on to set open hours." })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "fca-day-editor__hint", children: isOverride ? "This day is Off for clients. Clear override to make it blank, or turn it on to set hours." : "This day is blank (not bookable). Turn it on to set open hours." })
       ]
     }
   );
@@ -399,6 +423,21 @@ function AvailabilityMonthCalendar(props) {
       return;
     }
     onChange?.(setDayTimes(value ?? {}, dateKey, nextTimes));
+  }
+  function clearScheduleDay(scheduleId, dateKey) {
+    if (multi) {
+      const next = schedules.map((schedule) => {
+        if (schedule.id !== scheduleId) return schedule;
+        return {
+          ...schedule,
+          days: clearDayTimes(schedule.days, dateKey),
+          explicitDays: clearDayTimes(schedule.explicitDays ?? {}, dateKey)
+        };
+      });
+      onSchedulesChange?.(next);
+      return;
+    }
+    onChange?.(clearDayTimes(value ?? {}, dateKey));
   }
   const selectedDate = selectedKey ? gridDays.find((day) => toDateKey(day) === selectedKey) ?? null : null;
   return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: ["fca-root", className].filter(Boolean).join(" "), children: [
@@ -541,6 +580,10 @@ function AvailabilityMonthCalendar(props) {
           showClose: false,
           times: getDayTimes(schedule.days, selectedKey),
           disabled,
+          isOverride: isExplicitDay(schedule, selectedKey),
+          onClearOverride: () => {
+            clearScheduleDay(schedule.id, selectedKey);
+          },
           onChange: (nextTimes) => {
             updateScheduleDay(schedule.id, selectedKey, nextTimes);
           }
@@ -559,6 +602,7 @@ function AvailabilityMonthCalendar(props) {
   DayEditor,
   SLOT_STEP_MINUTES,
   addMonths,
+  clearDayTimes,
   defaultBusinessHourTimes,
   formatTimeAmPm,
   getDayTimes,

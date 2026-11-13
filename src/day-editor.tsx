@@ -31,6 +31,10 @@ export interface DayEditorProps {
   sectionTitle?: string
   tone?: "green" | "blue" | "neutral"
   showClose?: boolean
+  /** True when this date has a saved Open/Off override. */
+  isOverride?: boolean
+  /** Clear the override so the day becomes blank again. */
+  onClearOverride?: () => void
 }
 
 export function DayEditor({
@@ -43,6 +47,8 @@ export function DayEditor({
   sectionTitle,
   tone = "green",
   showClose = true,
+  isOverride = false,
+  onClearOverride,
 }: DayEditorProps) {
   const openTimes = React.useMemo(() => new Set(times), [times])
   const isOpen = openTimes.size > 0
@@ -110,19 +116,34 @@ export function DayEditor({
             disabled={disabled}
             onChange={event => setDayOpen(event.target.checked)}
           />
-          <span>{isOpen ? "Open" : "Closed"}</span>
+          <span>{isOpen ? "Open" : isOverride ? "Off" : "Closed"}</span>
         </label>
-        {isOpen ? (
-          <button
-            type="button"
-            className={`fca-chip${isAllDay ? " fca-chip--active" : ""}`}
-            aria-pressed={isAllDay}
-            disabled={disabled}
-            onClick={toggleAllDay}
-          >
-            24 hours
-          </button>
-        ) : null}
+        <div className="fca-day-editor__toolbar-actions">
+          {isOpen ? (
+            <button
+              type="button"
+              className={`fca-chip${isAllDay ? " fca-chip--active" : ""}`}
+              aria-pressed={isAllDay}
+              disabled={disabled}
+              onClick={toggleAllDay}
+            >
+              24 hours
+            </button>
+          ) : null}
+          {isOverride && onClearOverride ? (
+            <button
+              type="button"
+              className="fca-chip"
+              disabled={disabled}
+              onClick={() => {
+                if (disabled) return
+                onClearOverride()
+              }}
+            >
+              Clear override
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {isOpen ? (
@@ -163,7 +184,11 @@ export function DayEditor({
           </div>
         </>
       ) : (
-        <p className="fca-day-editor__hint">This day is closed. Turn it on to set open hours.</p>
+        <p className="fca-day-editor__hint">
+          {isOverride
+            ? "This day is Off for clients. Clear override to make it blank, or turn it on to set hours."
+            : "This day is blank (not bookable). Turn it on to set open hours."}
+        </p>
       )}
     </div>
   )

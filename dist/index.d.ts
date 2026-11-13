@@ -65,8 +65,12 @@ interface DayEditorProps {
     sectionTitle?: string;
     tone?: "green" | "blue" | "neutral";
     showClose?: boolean;
+    /** True when this date has a saved Open/Off override. */
+    isOverride?: boolean;
+    /** Clear the override so the day becomes blank again. */
+    onClearOverride?: () => void;
 }
-declare function DayEditor({ dateKey, dateLabel, times, onChange, onClose, disabled, sectionTitle, tone, showClose, }: DayEditorProps): React.JSX.Element;
+declare function DayEditor({ dateKey, dateLabel, times, onChange, onClose, disabled, sectionTitle, tone, showClose, isOverride, onClearOverride, }: DayEditorProps): React.JSX.Element;
 
 declare const SLOT_STEP_MINUTES = 30;
 declare const BUSINESS_HOUR_START_MINUTES: number;
@@ -91,10 +95,12 @@ declare function timesToRanges(times: readonly string[]): TimeRange[];
 declare function rangesToTimes(ranges: readonly TimeRange[]): string[];
 declare function summarizeDayHours(times: readonly string[]): string;
 declare function setDayTimes(days: AvailabilityDays, dateKey: string, times: readonly string[]): AvailabilityDays;
+/** Remove a date key so the day is blank (no override). */
+declare function clearDayTimes(days: AvailabilityDays, dateKey: string): AvailabilityDays;
 declare function getDayTimes(days: AvailabilityDays, dateKey: string): string[];
 declare function monthDateKeys(month: Date): {
     fromDate: string;
     toDate: string;
 };
 
-export { ALL_DAY_TIMES, type AvailabilityDays, AvailabilityMonthCalendar, type AvailabilityMonthCalendarProps, type AvailabilitySchedule, type AvailabilityScheduleId, type AvailabilityTime, BUSINESS_HOUR_END_MINUTES, BUSINESS_HOUR_START_MINUTES, DayEditor, type DayEditorProps, SLOT_STEP_MINUTES, type TimeRange, addMonths, defaultBusinessHourTimes, formatTimeAmPm, getDayTimes, getMonthGridDays, minutesToTimeLabel, monthDateKeys, monthLabel, normalizeAvailabilityTimes, parseDateKey, rangesToTimes, setDayTimes, startOfMonth, summarizeDayHours, timeToMinutes, timesToRanges, toDateKey };
+export { ALL_DAY_TIMES, type AvailabilityDays, AvailabilityMonthCalendar, type AvailabilityMonthCalendarProps, type AvailabilitySchedule, type AvailabilityScheduleId, type AvailabilityTime, BUSINESS_HOUR_END_MINUTES, BUSINESS_HOUR_START_MINUTES, DayEditor, type DayEditorProps, SLOT_STEP_MINUTES, type TimeRange, addMonths, clearDayTimes, defaultBusinessHourTimes, formatTimeAmPm, getDayTimes, getMonthGridDays, minutesToTimeLabel, monthDateKeys, monthLabel, normalizeAvailabilityTimes, parseDateKey, rangesToTimes, setDayTimes, startOfMonth, summarizeDayHours, timeToMinutes, timesToRanges, toDateKey };

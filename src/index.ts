@@ -25,6 +25,7 @@ export {
   normalizeAvailabilityTimes,
   parseDateKey,
   rangesToTimes,
+  clearDayTimes,
   setDayTimes,
   startOfMonth,
   summarizeDayHours,
