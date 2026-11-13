@@ -12,7 +12,6 @@ import {
   monthLabel,
   setDayTimes,
   startOfMonth,
-  summarizeDayHours,
   toDateKey,
 } from "./helpers"
 import type {
