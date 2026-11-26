@@ -237,6 +237,23 @@
   opacity: 0.7;
 }
 
+.fca-day-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.fca-day-panel__actions .fca-btn {
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 0.4rem 0.7rem;
+  white-space: nowrap;
+}
+
 .fca-day-editor--section {
   margin: 0;
 }

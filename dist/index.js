@@ -170,6 +170,32 @@ function monthDateKeys(month) {
   const end = new Date(month.getFullYear(), month.getMonth() + 1, 0);
   return { fromDate: toDateKey(start), toDate: toDateKey(end) };
 }
+function weekDateKeys(dateKey) {
+  const date = parseDateKey(dateKey);
+  if (!date) return [];
+  const mondayOffset = (date.getDay() + 6) % 7;
+  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate() - mondayOffset);
+  return Array.from({ length: 7 }, (_, i) => {
+    return toDateKey(
+      new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)
+    );
+  });
+}
+function monthDayKeys(month) {
+  const start = startOfMonth(month);
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  return Array.from({ length: daysInMonth }, (_, i) => {
+    return toDateKey(new Date(start.getFullYear(), start.getMonth(), i + 1));
+  });
+}
+function applyDayTimesToKeys(days, sourceTimes, targetKeys) {
+  const times = normalizeAvailabilityTimes(sourceTimes);
+  let next = days;
+  for (const key of targetKeys) {
+    next = setDayTimes(next, key, times);
+  }
+  return next;
+}
 
 // src/day-editor.tsx
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
@@ -402,6 +428,30 @@ function AvailabilityMonthCalendar(props) {
     }
     onChange?.(clearDayTimes(value ?? {}, dateKey));
   }
+  function repeatSelectedTo(scope) {
+    if (!selectedKey || disabled) return;
+    const rawKeys = scope === "week" ? weekDateKeys(selectedKey) : monthDayKeys(month);
+    const targetKeys = rawKeys.filter((key) => !isDateKeyPast(key, today, timeZone));
+    if (targetKeys.length === 0) return;
+    if (multi) {
+      const next = schedules.map((schedule) => {
+        const sourceTimes2 = getDayTimes(schedule.days, selectedKey);
+        return {
+          ...schedule,
+          days: applyDayTimesToKeys(schedule.days, sourceTimes2, targetKeys),
+          explicitDays: applyDayTimesToKeys(
+            schedule.explicitDays ?? {},
+            sourceTimes2,
+            targetKeys
+          )
+        };
+      });
+      onSchedulesChange?.(next);
+      return;
+    }
+    const sourceTimes = getDayTimes(value ?? {}, selectedKey);
+    onChange?.(applyDayTimesToKeys(value ?? {}, sourceTimes, targetKeys));
+  }
   const selectedIsPast = selectedKey !== null && isDateKeyPast(selectedKey, today, timeZone);
   React2.useEffect(() => {
     if (selectedIsPast) setSelectedKey(null);
@@ -532,17 +582,39 @@ function AvailabilityMonthCalendar(props) {
             day: "numeric",
             year: "numeric"
           }) }),
-          /* @__PURE__ */ jsx2("p", { className: "fca-day-panel__hint", children: multi ? "Both services on this day \u2014 edit each separately. Saving marks the day as an override." : "Set open hours for this day. Saving marks the day as an override." })
+          /* @__PURE__ */ jsx2("p", { className: "fca-day-panel__hint", children: multi ? "Both services on this day \u2014 edit each separately. Repeat overwrites all days in that week or month for every service." : "Set open hours for this day. Repeat overwrites all days in that week or month." })
         ] }),
-        /* @__PURE__ */ jsx2(
-          "button",
-          {
-            type: "button",
-            className: "fca-btn fca-btn--ghost",
-            onClick: () => setSelectedKey(null),
-            children: "Done"
-          }
-        )
+        /* @__PURE__ */ jsxs2("div", { className: "fca-day-panel__actions", children: [
+          /* @__PURE__ */ jsx2(
+            "button",
+            {
+              type: "button",
+              className: "fca-btn",
+              disabled,
+              onClick: () => repeatSelectedTo("week"),
+              children: "This week"
+            }
+          ),
+          /* @__PURE__ */ jsx2(
+            "button",
+            {
+              type: "button",
+              className: "fca-btn",
+              disabled,
+              onClick: () => repeatSelectedTo("month"),
+              children: "This month"
+            }
+          ),
+          /* @__PURE__ */ jsx2(
+            "button",
+            {
+              type: "button",
+              className: "fca-btn",
+              onClick: () => setSelectedKey(null),
+              children: "Done"
+            }
+          )
+        ] })
       ] }),
       schedules.map((schedule) => /* @__PURE__ */ jsx2(
         DayEditor,
@@ -575,6 +647,7 @@ export {
   DayEditor,
   SLOT_STEP_MINUTES,
   addMonths,
+  applyDayTimesToKeys,
   clearDayTimes,
   defaultBusinessHourTimes,
   formatTimeAmPm,
@@ -583,6 +656,7 @@ export {
   isDateKeyPast,
   minutesToTimeLabel,
   monthDateKeys,
+  monthDayKeys,
   monthLabel,
   normalizeAvailabilityTimes,
   parseDateKey,
@@ -593,6 +667,7 @@ export {
   timeToMinutes,
   timesToRanges,
   toDateKey,
-  toDateKeyInTimeZone
+  toDateKeyInTimeZone,
+  weekDateKeys
 };
 //# sourceMappingURL=index.js.map

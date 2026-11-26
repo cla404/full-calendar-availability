@@ -215,3 +215,39 @@ export function monthDateKeys(month: Date): { fromDate: string; toDate: string }
   const end = new Date(month.getFullYear(), month.getMonth() + 1, 0)
   return { fromDate: toDateKey(start), toDate: toDateKey(end) }
 }
+
+/** Monday–Sunday date keys for the week containing `dateKey`. */
+export function weekDateKeys(dateKey: string): string[] {
+  const date = parseDateKey(dateKey)
+  if (!date) return []
+  const mondayOffset = (date.getDay() + 6) % 7
+  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate() - mondayOffset)
+  return Array.from({ length: 7 }, (_, i) => {
+    return toDateKey(
+      new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)
+    )
+  })
+}
+
+/** Every `YYYY-MM-DD` in the calendar month of `month` (no leading/trailing padding). */
+export function monthDayKeys(month: Date): string[] {
+  const start = startOfMonth(month)
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
+  return Array.from({ length: daysInMonth }, (_, i) => {
+    return toDateKey(new Date(start.getFullYear(), start.getMonth(), i + 1))
+  })
+}
+
+/** Copy `sourceTimes` onto every key in `targetKeys` (overwrites). */
+export function applyDayTimesToKeys(
+  days: AvailabilityDays,
+  sourceTimes: readonly string[],
+  targetKeys: readonly string[]
+): AvailabilityDays {
+  const times = normalizeAvailabilityTimes(sourceTimes)
+  let next = days
+  for (const key of targetKeys) {
+    next = setDayTimes(next, key, times)
+  }
+  return next
+}

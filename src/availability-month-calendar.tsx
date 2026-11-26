@@ -5,16 +5,19 @@ import * as React from "react"
 import { DayEditor } from "./day-editor"
 import {
   addMonths,
+  applyDayTimesToKeys,
   clearDayTimes,
   getDayTimes,
   getMonthGridDays,
   isDateKeyPast,
   isSameMonth,
+  monthDayKeys,
   monthLabel,
   setDayTimes,
   startOfMonth,
   toDateKey,
   toDateKeyInTimeZone,
+  weekDateKeys,
 } from "./helpers"
 import type {
   AvailabilityMonthCalendarProps,
@@ -115,6 +118,33 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
       return
     }
     onChange?.(clearDayTimes(value ?? {}, dateKey))
+  }
+
+  function repeatSelectedTo(scope: "week" | "month") {
+    if (!selectedKey || disabled) return
+    const rawKeys = scope === "week" ? weekDateKeys(selectedKey) : monthDayKeys(month)
+    const targetKeys = rawKeys.filter(key => !isDateKeyPast(key, today, timeZone))
+    if (targetKeys.length === 0) return
+
+    if (multi) {
+      const next = schedules.map(schedule => {
+        const sourceTimes = getDayTimes(schedule.days, selectedKey)
+        return {
+          ...schedule,
+          days: applyDayTimesToKeys(schedule.days, sourceTimes, targetKeys),
+          explicitDays: applyDayTimesToKeys(
+            schedule.explicitDays ?? {},
+            sourceTimes,
+            targetKeys
+          ),
+        }
+      })
+      onSchedulesChange?.(next)
+      return
+    }
+
+    const sourceTimes = getDayTimes(value ?? {}, selectedKey)
+    onChange?.(applyDayTimesToKeys(value ?? {}, sourceTimes, targetKeys))
   }
 
   const selectedIsPast =
@@ -283,17 +313,35 @@ export function AvailabilityMonthCalendar(props: AvailabilityMonthCalendarProps)
               </h3>
               <p className="fca-day-panel__hint">
                 {multi
-                  ? "Both services on this day — edit each separately. Saving marks the day as an override."
-                  : "Set open hours for this day. Saving marks the day as an override."}
+                  ? "Both services on this day — edit each separately. Repeat overwrites all days in that week or month for every service."
+                  : "Set open hours for this day. Repeat overwrites all days in that week or month."}
               </p>
             </div>
-            <button
-              type="button"
-              className="fca-btn fca-btn--ghost"
-              onClick={() => setSelectedKey(null)}
-            >
-              Done
-            </button>
+            <div className="fca-day-panel__actions">
+              <button
+                type="button"
+                className="fca-btn"
+                disabled={disabled}
+                onClick={() => repeatSelectedTo("week")}
+              >
+                This week
+              </button>
+              <button
+                type="button"
+                className="fca-btn"
+                disabled={disabled}
+                onClick={() => repeatSelectedTo("month")}
+              >
+                This month
+              </button>
+              <button
+                type="button"
+                className="fca-btn"
+                onClick={() => setSelectedKey(null)}
+              >
+                Done
+              </button>
+            </div>
           </div>
           {schedules.map(schedule => (
             <DayEditor

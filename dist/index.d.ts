@@ -106,5 +106,11 @@ declare function monthDateKeys(month: Date): {
     fromDate: string;
     toDate: string;
 };
+/** Monday–Sunday date keys for the week containing `dateKey`. */
+declare function weekDateKeys(dateKey: string): string[];
+/** Every `YYYY-MM-DD` in the calendar month of `month` (no leading/trailing padding). */
+declare function monthDayKeys(month: Date): string[];
+/** Copy `sourceTimes` onto every key in `targetKeys` (overwrites). */
+declare function applyDayTimesToKeys(days: AvailabilityDays, sourceTimes: readonly string[], targetKeys: readonly string[]): AvailabilityDays;
 
-export { ALL_DAY_TIMES, type AvailabilityDays, AvailabilityMonthCalendar, type AvailabilityMonthCalendarProps, type AvailabilitySchedule, type AvailabilityScheduleId, type AvailabilityTime, BUSINESS_HOUR_END_MINUTES, BUSINESS_HOUR_START_MINUTES, DayEditor, type DayEditorProps, SLOT_STEP_MINUTES, type TimeRange, addMonths, clearDayTimes, defaultBusinessHourTimes, formatTimeAmPm, getDayTimes, getMonthGridDays, isDateKeyPast, minutesToTimeLabel, monthDateKeys, monthLabel, normalizeAvailabilityTimes, parseDateKey, rangesToTimes, setDayTimes, startOfMonth, summarizeDayHours, timeToMinutes, timesToRanges, toDateKey, toDateKeyInTimeZone };
+export { ALL_DAY_TIMES, type AvailabilityDays, AvailabilityMonthCalendar, type AvailabilityMonthCalendarProps, type AvailabilitySchedule, type AvailabilityScheduleId, type AvailabilityTime, BUSINESS_HOUR_END_MINUTES, BUSINESS_HOUR_START_MINUTES, DayEditor, type DayEditorProps, SLOT_STEP_MINUTES, type TimeRange, addMonths, applyDayTimesToKeys, clearDayTimes, defaultBusinessHourTimes, formatTimeAmPm, getDayTimes, getMonthGridDays, isDateKeyPast, minutesToTimeLabel, monthDateKeys, monthDayKeys, monthLabel, normalizeAvailabilityTimes, parseDateKey, rangesToTimes, setDayTimes, startOfMonth, summarizeDayHours, timeToMinutes, timesToRanges, toDateKey, toDateKeyInTimeZone, weekDateKeys };
